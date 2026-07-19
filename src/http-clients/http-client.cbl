@@ -13,13 +13,13 @@
        01  CURLOPT-URL     PIC S9(9) COMP-5 VALUE 10002.
 
        PROCEDURE DIVISION.
-           DISPLAY "--- REST API呼び出し開始 ---"
+           DISPLAY "--- Start REST API call ---"
 
       * 1. Initialize libcurl (CALL curl_easy_init in C language)
            CALL "curl_easy_init" RETURNING CURL-HANDLE.
 
            IF CURL-HANDLE = NULL
-               DISPLAY "初期化失敗"
+               DISPLAY "Initialization failed"
                STOP RUN
            END-IF.
 
