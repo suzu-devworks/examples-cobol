@@ -1,0 +1,14 @@
+{
+  "version": "0.2",
+  "ignorePaths": [
+    "[Dd]ockerfile",
+    "devcontainer{,*}.json",
+    "Makefile"
+  ],
+  "dictionaryDefinitions": [],
+  "dictionaries": [],
+  "words": [],
+  "ignoreWords": [],
+  "import": [],
+  "useGitignore": true
+}
