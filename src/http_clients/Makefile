@@ -7,7 +7,7 @@ BIN_DIR = bin
 
 # Targets and dependencies
 SOURCES = $(wildcard *.cbl)
-TARGET = $(BIN_DIR)/http-client
+TARGET = $(BIN_DIR)/http_client
 
 .PHONY: all
 all: $(TARGET)

@@ -9,7 +9,7 @@ RUN set -x \
     && apt -y install --no-install-recommends apt-utils dialog 2>&1 \
     # Install libraries
     && apt -y install --no-install-recommends \
-        gnucobol
+        gnucobol \
     ;
 
 # Clean up

@@ -1,18 +1,17 @@
-# src/ の直下にあるすべてのディレクトリを見つける
-SUBDIRS := $(wildcard src/*/)
+# Get the path where the Makefile is located (src/*/Makefile),
+SUBDIRS := $(dir $(wildcard src/*/Makefile))
 
-# デフォルトターゲット
+# default target
 all: $(SUBDIRS)
 
-# 各サブディレクトリで make を実行
+# Run make in each subdirectory
 $(SUBDIRS):
 	$(MAKE) -C $@
 
-# 各サブディレクトリの make clean を呼び出す
+# Call make clean on each subdirectory
 clean:
 	@for dir in $(SUBDIRS); do \
 		$(MAKE) -C $$dir clean; \
 	done
 
 .PHONY: all clean $(SUBDIRS)
-
