@@ -30,6 +30,7 @@
        01  WS-RANDOM-SEED      PIC 9(008) VALUE 12345678.
        01  WS-RAND-NUM         PIC 9V9999.
        01  WS-RAND-IDX         PIC 9(001).
+
        01  WS-CURRENT-DATE.
            05  WS-YEAR         PIC 9(004).
            05  FILLER          PIC X(017).
@@ -112,14 +113,14 @@
            DISPLAY "CURRENT YEAR: " WS-YEAR.
 
        DISPLAY-USAGE.
-           DISPLAY "Usage: generator [FILENAME] [MODE] [COUNT]"
-           DISPLAY "       MODE:   'rand' or 'sorted'"
+           DISPLAY "Usage: generate-employee [FILENAME] [MODE] [COUNT]".
+           DISPLAY "       MODE:   'rand' or 'sorted'".
            DISPLAY "       COUNT:  1 - 999999 (default: 50)".
 
       * --- Terminate process
        TERMINATE-PROCESS.
            CLOSE OUT-FILE.
-           DISPLAY "SUCCESS: GENERATION COMPLETED.".
+           DISPLAY "SUCCESS: Generator Completed.".
            DISPLAY "--------------------------".
            DISPLAY "OUTPUT WRITE COUNT: " WS-OUT1-COUNT.
            DISPLAY "--------------------------".
