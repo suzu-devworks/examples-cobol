@@ -10,27 +10,27 @@
        DATA DIVISION.
        FILE SECTION.
        FD  OUT-FILE.
-       01  OUT-RECORD         PIC X(050).
+       01  OUT-REC             PIC X(050).
 
        WORKING-STORAGE SECTION.
       *--- For receiving command line arguments
        01  WS-ARGS.
-           05  WS-ARG-COUNT   PIC 9(002) VALUE 0.
-           05  WS-FILE-NAME   PIC X(050) VALUE SPACES.
-           05  WS-MODE        PIC X(010) VALUE SPACES.
-           05  WS-COUNT-STR   PIC X(006) VALUE SPACES.
+           05  WS-ARG-COUNT    PIC 9(002) VALUE 0.
+           05  WS-FILE-NAME    PIC X(050) VALUE SPACES.
+           05  WS-MODE         PIC X(010) VALUE SPACES.
+           05  WS-COUNT-STR    PIC X(006) VALUE SPACES.
 
       *--- For loop control
        01  WS-COUNTERS.
-           05  WS-OUT1-COUNT  PIC 9(006) VALUE 0.
-           05  WS-I           PIC 9(006) VALUE 0.
-           05  WS-MAX-RECORDS PIC 9(006) VALUE 50.  *> Default 50 items
+           05  WS-OUT1-COUNT   PIC 9(006) VALUE 0.
+           05  WS-I            PIC 9(006) VALUE 0.
+           05  WS-MAX-RECORDS  PIC 9(006) VALUE 50.  *> Default 50 items
 
       *--- For random numbers/logic
        01  WS-RANDOM-SEED      PIC 9(008) VALUE 12345678.
        01  WS-RAND-NUM         PIC 9V9999.
        01  WS-RAND-IDX         PIC 9(001).
-
+search
        01  WS-CURRENT-DATE.
            05  WS-YEAR         PIC 9(004).
            05  FILLER          PIC X(017).
@@ -68,7 +68,7 @@
 
        PROCEDURE DIVISION.
            PERFORM INITIALIZE-PROCESS
-           PERFORM MAIN-RECORDS
+           PERFORM MAIN-PROCESS
            PERFORM TERMINATE-PROCESS
            STOP RUN.
 
@@ -126,7 +126,7 @@
            DISPLAY "--------------------------".
 
       * --- Main processing
-       MAIN-RECORDS.
+       MAIN-PROCESS.
            COMPUTE WS-RAND-NUM = FUNCTION RANDOM(WS-RANDOM-SEED)
 
            PERFORM VARYING WS-I FROM 1 BY 1 UNTIL WS-I > WS-MAX-RECORDS
@@ -167,5 +167,5 @@
            COMPUTE WK-EMP-SALARY = 200000 + (WS-RAND-NUM * 400000).
 
        WRITE-OUT1-RECORD.
-           WRITE OUT-RECORD FROM WK-EMP-REC
+           WRITE OUT-REC FROM WK-EMP-REC
            ADD 1 TO WS-OUT1-COUNT.
