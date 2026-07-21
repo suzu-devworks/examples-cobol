@@ -2,5 +2,5 @@
        PROGRAM-ID. hello.
 
        PROCEDURE DIVISION.
-           DISPLAY "Hello, World!".
+           DISPLAY "Hello, World!"
            STOP RUN.

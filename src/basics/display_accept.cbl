@@ -9,13 +9,13 @@
            05  IN-DATA-NUM PIC 9(3).
 
        PROCEDURE DIVISION.
-           DISPLAY "Please enter a message: " WITH NO ADVANCING.
-           ACCEPT IN-DATA-STR FROM CONSOLE.
-           DISPLAY "You entered: " IN-DATA-STR.
-           DISPLAY SPACE.
+           DISPLAY "Please enter a message: " WITH NO ADVANCING
+           ACCEPT IN-DATA-STR FROM CONSOLE
+           DISPLAY "You entered: " IN-DATA-STR
+           DISPLAY SPACE
 
-           DISPLAY "PLEASE enter an integer: " WITH NO ADVANCING.
-           ACCEPT IN-DATA-NUM-X FROM CONSOLE.
+           DISPLAY "PLEASE enter an integer: " WITH NO ADVANCING
+           ACCEPT IN-DATA-NUM-X FROM CONSOLE
            IF IN-DATA-NUM-X IS NUMERIC
 
                IF IN-DATA-NUM < 100
@@ -28,6 +28,6 @@
 
            ELSE
                DISPLAY "You did not enter a valid integer."
-           END-IF.
-           DISPLAY SPACE.
+           END-IF
+           DISPLAY SPACE
            STOP RUN.

@@ -74,60 +74,60 @@
 
       * --- Initialize process
        INITIALIZE-PROCESS.
-           DISPLAY "Generator started.".
-           ACCEPT WS-ARG-COUNT FROM ARGUMENT-NUMBER.
+           DISPLAY "Generator started."
+           ACCEPT WS-ARG-COUNT FROM ARGUMENT-NUMBER
            IF WS-ARG-COUNT < 1
                PERFORM DISPLAY-USAGE
                STOP RUN
-           END-IF.
+           END-IF
 
-           ACCEPT WS-FILE-NAME FROM ARGUMENT-VALUE.
-           ACCEPT WS-MODE      FROM ARGUMENT-VALUE.
-           ACCEPT WS-COUNT-STR FROM ARGUMENT-VALUE.
+           ACCEPT WS-FILE-NAME FROM ARGUMENT-VALUE
+           ACCEPT WS-MODE      FROM ARGUMENT-VALUE
+           ACCEPT WS-COUNT-STR FROM ARGUMENT-VALUE
 
            IF WS-FILE-NAME = SPACES
                PERFORM DISPLAY-USAGE
                STOP RUN
-           END-IF.
+           END-IF
 
            IF WS-MODE = SPACES
                MOVE "rand" TO WS-MODE
-           END-IF.
+           END-IF
 
            IF WS-MODE NOT = "rand" AND WS-MODE NOT = "sorted"
                PERFORM DISPLAY-USAGE
                STOP RUN
-           END-IF.
+           END-IF
 
            IF WS-COUNT-STR NOT = SPACES
                COMPUTE WS-MAX-RECORDS = FUNCTION NUMVAL(WS-COUNT-STR)
-           END-IF.
+           END-IF
 
-           DISPLAY "OUTPUT FILE:  " FUNCTION TRIM(WS-FILE-NAME).
-           DISPLAY "MODE:         " FUNCTION TRIM(WS-MODE).
-           DISPLAY "COUNT:        " WS-MAX-RECORDS.
+           MOVE FUNCTION CURRENT-DATE TO WS-CURRENT-DATE
+           DISPLAY "CURRENT YEAR: " WS-YEAR
+
+           DISPLAY "OUTPUT FILE:  " FUNCTION TRIM(WS-FILE-NAME)
+           DISPLAY "MODE:         " FUNCTION TRIM(WS-MODE)
+           DISPLAY "COUNT:        " WS-MAX-RECORDS
 
            OPEN OUTPUT OUT-FILE.
 
-           MOVE FUNCTION CURRENT-DATE TO WS-CURRENT-DATE.
-           DISPLAY "CURRENT YEAR: " WS-YEAR.
-
        DISPLAY-USAGE.
-           DISPLAY "Usage: generate_emp [FILENAME] [MODE] [COUNT]".
-           DISPLAY "       MODE:   'rand' or 'sorted'".
+           DISPLAY "Usage: generate_emp [FILENAME] [MODE] [COUNT]"
+           DISPLAY "       MODE:   'rand' or 'sorted'"
            DISPLAY "       COUNT:  1 - 999999 (default: 50)".
 
       * --- Terminate process
        TERMINATE-PROCESS.
            CLOSE OUT-FILE.
-           DISPLAY "SUCCESS: Generator Completed.".
-           DISPLAY "--------------------------".
-           DISPLAY "OUTPUT WRITE COUNT: " WS-OUT1-COUNT.
+           DISPLAY "SUCCESS: Generator Completed."
+           DISPLAY "--------------------------"
+           DISPLAY "OUTPUT WRITE COUNT: " WS-OUT1-COUNT
            DISPLAY "--------------------------".
 
       * --- Main processing
        MAIN-RECORDS.
-           COMPUTE WS-RAND-NUM = FUNCTION RANDOM(WS-RANDOM-SEED).
+           COMPUTE WS-RAND-NUM = FUNCTION RANDOM(WS-RANDOM-SEED)
 
            PERFORM VARYING WS-I FROM 1 BY 1 UNTIL WS-I > WS-MAX-RECORDS
                PERFORM GENERATE-RECORD
@@ -135,7 +135,7 @@
            END-PERFORM.
 
        GENERATE-RECORD.
-           INITIALIZE WK-EMP-REC.
+           INITIALIZE WK-EMP-REC
 
            *> 1. Select employee number
            IF WS-MODE = "sorted"
@@ -151,8 +151,8 @@
            MOVE WS-NAMES(WS-RAND-IDX) TO WK-EMP-NAME
 
            *> 3 & 4. Select your department id and name
-           COMPUTE WS-RAND-NUM = FUNCTION RANDOM.
-           COMPUTE WS-RAND-IDX = 1 + (WS-RAND-NUM * 5).
+           COMPUTE WS-RAND-NUM = FUNCTION RANDOM
+           COMPUTE WS-RAND-IDX = 1 + (WS-RAND-NUM * 5)
            MOVE WS-MAP-DEPT-ID(WS-RAND-IDX) TO WK-EMP-DEPT-ID
            MOVE WS-MAP-DEPT-NAME(WS-RAND-IDX) TO WK-EMP-DEPT-NAME
 
@@ -160,12 +160,12 @@
            COMPUTE WS-RAND-NUM = FUNCTION RANDOM
            COMPUTE WK-EMP-JOIN-DATE = (WS-YEAR * 10000)
                    + (1 + FUNCTION INTEGER(WS-RAND-NUM * 12)) * 100
-                   + (1 + FUNCTION INTEGER(WS-RAND-NUM * 28)).
+                   + (1 + FUNCTION INTEGER(WS-RAND-NUM * 28))
 
            *> 6. Generate random salaries
-           COMPUTE WS-RAND-NUM = FUNCTION RANDOM.
+           COMPUTE WS-RAND-NUM = FUNCTION RANDOM
            COMPUTE WK-EMP-SALARY = 200000 + (WS-RAND-NUM * 400000).
 
        WRITE-OUT1-RECORD.
-           WRITE OUT-RECORD FROM WK-EMP-REC.
+           WRITE OUT-RECORD FROM WK-EMP-REC
            ADD 1 TO WS-OUT1-COUNT.

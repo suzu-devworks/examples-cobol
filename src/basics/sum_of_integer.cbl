@@ -8,13 +8,13 @@
        01  summary BINARY-LONG.
 
        PROCEDURE DIVISION.
-           DISPLAY "Please enter an integer 9(9): " WITH NO ADVANCING.
-           ACCEPT num FROM CONSOLE.
+           DISPLAY "Please enter an integer 9(9): " WITH NO ADVANCING
+           ACCEPT num FROM CONSOLE
 
            PERFORM VARYING i FROM 1 BY 1 UNTIL i > num
                ADD i TO summary
-           END-PERFORM.
+           END-PERFORM
 
-           DISPLAY "The sum is " summary.
-           DISPLAY SPACE.
+           DISPLAY "The sum is " summary
+           DISPLAY SPACE
            STOP RUN.
