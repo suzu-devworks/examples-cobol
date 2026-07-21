@@ -70,6 +70,7 @@ Testing/
 
 ## binary
 bin/
+obj/
 
 ## workspace
 [Tt]emp/

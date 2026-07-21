@@ -1,5 +1,5 @@
        IDENTIFICATION DIVISION.
-       PROGRAM-ID. DISPLAY-ACCEPT.
+       PROGRAM-ID. display_accept.
 
        DATA DIVISION.
        WORKING-STORAGE SECTION.
@@ -14,7 +14,7 @@
            DISPLAY "You entered: " IN-DATA-STR.
            DISPLAY SPACE.
 
-           DISPLAY "Please enter an integer: " WITH NO ADVANCING.
+           DISPLAY "PLEASE enter an integer: " WITH NO ADVANCING.
            ACCEPT IN-DATA-NUM-X FROM CONSOLE.
            IF IN-DATA-NUM-X IS NUMERIC
 

@@ -1,5 +1,5 @@
        IDENTIFICATION DIVISION.
-       PROGRAM-ID. SUM-OF-INTEGER.
+       PROGRAM-ID. sum_of_integer.
 
        DATA DIVISION.
        WORKING-STORAGE SECTION.

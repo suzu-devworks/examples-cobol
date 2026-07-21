@@ -1,5 +1,5 @@
        IDENTIFICATION DIVISION.
-       PROGRAM-ID. GENERATE-EMPLOYEE.
+       PROGRAM-ID. generate_emp.
 
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
@@ -36,7 +36,7 @@
            05  FILLER          PIC X(017).
 
       *--- 1. Record definition for EMP (employee)
-       COPY employee-rec REPLACING ==:PREFIX:== BY ==WK==.
+       COPY emp_rec REPLACING ==:PREFIX:== BY ==WK==.
            05  FILLER              PIC X(008).
 
       *--- name table
@@ -113,7 +113,7 @@
            DISPLAY "CURRENT YEAR: " WS-YEAR.
 
        DISPLAY-USAGE.
-           DISPLAY "Usage: generate-employee [FILENAME] [MODE] [COUNT]".
+           DISPLAY "Usage: generate_emp [FILENAME] [MODE] [COUNT]".
            DISPLAY "       MODE:   'rand' or 'sorted'".
            DISPLAY "       COUNT:  1 - 999999 (default: 50)".
 
