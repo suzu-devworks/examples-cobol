@@ -17,7 +17,7 @@ TARGETS = $(SOURCES:%.cbl=$(BIN_DIR)/%)
 all: $(TARGETS)
 
 $(BIN_DIR)/%: $(OBJ_DIR)/%.o | $(BIN_DIR)
-	$(COBC) -x $(COBFLAGS) -o $@ $<
+	$(COBC) -x $(COBFLAGS) -o $@ $^
 
 $(OBJ_DIR)/%.o: %.cbl | $(OBJ_DIR)
 	$(COBC) -x -c $(COBFLAGS) -I $(COPY_DIR) -o $@ $<
