@@ -10,9 +10,12 @@
   "words": [
     "CURLOPT",
     "DEPTS",
+    "FILEN",
+    "GETPID",
     "GOBACK",
     "NUMVAL",
-    "setopt"
+    "setopt",
+    "unparse"
   ],
   "ignoreWords": [],
   "import": [],

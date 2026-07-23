@@ -36,10 +36,9 @@ $(OBJ_DIR)/%.o: $(SHARE_DIR)/%.cbl | $(OBJ_DIR)
 $(OBJ_DIR) $(BIN_DIR):
 	mkdir -p $@
 
-$(BIN_DIR)/generate_uuid: private COBFLAGS += -luuid
-$(BIN_DIR)/generate_uuid: $(OBJ_DIR)/generate_uuid.o $(OBJ_DIR)/gen_uuid.o
+$(BIN_DIR)/sort_records_legacy: $(OBJ_DIR)/sort_records_legacy.o  $(OBJ_DIR)/quick_sort.o
 
-.SECONDARY: $(OBJS)
+.SECONDARY: $(SOURCES:%.cbl=$(OBJ_DIR)/%.o)
 
 .PHONY: clean
 clean:
