@@ -38,19 +38,19 @@
       *--- For receiving command line arguments
        01  WS-ARGS.
            05  WS-ARG-COUNT            PIC 9(002) VALUE 0.
-           05  WS-IN-FILE-PATH         PIC X(100) VALUE SPACES.
-           05  WS-OUT-FILE-PATH        PIC X(100) VALUE SPACES.
+           05  WS-IN-FILE-PATH         PIC X(1024) VALUE SPACES.
+           05  WS-OUT-FILE-PATH        PIC X(1024) VALUE SPACES.
            05  WS-ARG-KEY-START        PIC 9(003) VALUE 1. *> Starting position (starting from 1)
            05  WS-ARG-KEY-LEN          PIC 9(003) VALUE 4. *> Number of character
 
        01  WS-WORK-FILES.
-           05  WS-WORK-F1-PATH         PIC X(100) VALUE SPACES.
-           05  WS-WORK-F2-PATH         PIC X(100) VALUE SPACES.
-           05  WS-WORK-F3-PATH         PIC X(100) VALUE SPACES.
-           05  WS-WORK-F4-PATH         PIC X(100) VALUE SPACES.
+           05  WS-WORK-F1-PATH         PIC X(1024) VALUE SPACES.
+           05  WS-WORK-F2-PATH         PIC X(1024) VALUE SPACES.
+           05  WS-WORK-F3-PATH         PIC X(1024) VALUE SPACES.
+           05  WS-WORK-F4-PATH         PIC X(1024) VALUE SPACES.
 
        01  WS-WORK-FILE-ARRAY REDEFINES WS-WORK-FILES.
-           05 WS-WORK-FILE-PATH OCCURS 4 TIMES PIC X(100).
+           05 WS-WORK-FILE-PATH OCCURS 4 TIMES PIC X(1024).
        01  WS-WORK-IDX                 PIC 9(001) VALUE 0.
 
        01  WS-COUNTERS.

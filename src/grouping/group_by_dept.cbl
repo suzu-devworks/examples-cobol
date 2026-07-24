@@ -20,8 +20,8 @@
       *--- For receiving command line arguments
        01  WS-ARGS.
            05  WS-ARG-COUNT        PIC 9(002) VALUE 0.
-           05  WS-IN-FILE-PATH     PIC X(100) VALUE SPACES.
-           05  WS-OUT-FILE-PATH    PIC X(100) VALUE SPACES.
+           05  WS-IN-FILE-PATH     PIC X(1024) VALUE SPACES.
+           05  WS-OUT-FILE-PATH    PIC X(1024) VALUE SPACES.
 
        01  WS-COUNTERS.
            05  WS-IN-COUNT         PIC 9(006) VALUE 0.
