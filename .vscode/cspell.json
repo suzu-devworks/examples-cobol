@@ -3,7 +3,8 @@
   "ignorePaths": [
     "[Dd]ockerfile",
     "devcontainer{,*}.json",
-    "Makefile"
+    "Makefile",
+    "*.mk"
   ],
   "dictionaryDefinitions": [],
   "dictionaries": [],
@@ -13,6 +14,7 @@
     "FILEN",
     "GETPID",
     "GOBACK",
+    "Makefiles",
     "NUMVAL",
     "setopt",
     "unparse"
