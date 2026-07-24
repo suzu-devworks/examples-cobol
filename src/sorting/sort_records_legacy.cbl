@@ -56,10 +56,10 @@
        01  WS-COUNTERS.
            05  WS-IN-COUNT             PIC 9(006) VALUE 0.
            05  WS-OUT-COUNT            PIC 9(006) VALUE 0.
+           05  WS-I                    PIC 9(005) COMP-5 VALUE 0.
 
        01  WS-VARS.
            05  WS-USAGE-STR            PIC X(100).
-           05  WS-I                    PIC 9(005) COMP-5 VALUE 0.
            05  WS-PID                  PIC 9(008).
 
       * --- For quick sort ---
@@ -139,8 +139,7 @@
 
        DISPLAY-USAGE.
            STRING
-               "Usage: sort_records_legacy"
-               " [IN-FILENAME] [OUT-FILENAME]"
+               "sort_records_legacy [IN-FILE] [OUT-FILE]"
                " [KEY-START] [KEY-LEN]"
                INTO WS-USAGE-STR.
            DISPLAY "Usage: " WS-USAGE-STR.

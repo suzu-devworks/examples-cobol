@@ -19,12 +19,16 @@
            05  WS-FILE-NAME    PIC X(050) VALUE SPACES.
            05  WS-MODE         PIC X(010) VALUE SPACES.
            05  WS-COUNT-STR    PIC X(006) VALUE SPACES.
+           05  WS-MAX-RECORDS  PIC 9(006) VALUE 50.  *> Default 50 items
 
       *--- For loop control
        01  WS-COUNTERS.
            05  WS-OUT1-COUNT   PIC 9(006) VALUE 0.
            05  WS-I            PIC 9(006) VALUE 0.
-           05  WS-MAX-RECORDS  PIC 9(006) VALUE 50.  *> Default 50 items
+
+      *--- Record definition for EMP (employee)
+       COPY emp_rec REPLACING ==:PREFIX:== BY ==WK==.
+           05  FILLER              PIC X(008).
 
       *--- For random numbers/logic
        01  WS-RANDOM-SEED      PIC 9(008) VALUE 12345678.
@@ -34,10 +38,6 @@ search
        01  WS-CURRENT-DATE.
            05  WS-YEAR         PIC 9(004).
            05  FILLER          PIC X(017).
-
-      *--- 1. Record definition for EMP (employee)
-       COPY emp_rec REPLACING ==:PREFIX:== BY ==WK==.
-           05  FILLER              PIC X(008).
 
       *--- name table
       *> spell-checker: disable

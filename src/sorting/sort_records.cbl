@@ -94,8 +94,7 @@
 
        DISPLAY-USAGE.
            STRING
-               "Usage: sort_records"
-               " [IN-FILENAME] [OUT-FILENAME]"
+               "sort_records [IN-FILE] [OUT-FILE]"
                " [KEY-START] [KEY-LEN]"
                INTO WS-USAGE-STR.
            DISPLAY "Usage: " WS-USAGE-STR.
