@@ -19,8 +19,8 @@
         "EditorConfig.EditorConfig",
         "streetsidesoftware.code-spell-checker",
         "DavidAnson.vscode-markdownlint",
-        "ms-dotnettools.csdevkit",
-        "bitlang.cobol"
+        "bitlang.cobol",
+        "ms-vscode.cpptools"
       ],
       "settings": {}
     }

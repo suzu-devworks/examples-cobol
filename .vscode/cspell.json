@@ -3,15 +3,21 @@
   "ignorePaths": [
     "[Dd]ockerfile",
     "devcontainer{,*}.json",
-    "Makefile"
+    "Makefile",
+    "*.mk"
   ],
   "dictionaryDefinitions": [],
   "dictionaries": [],
   "words": [
     "CURLOPT",
     "DEPTS",
+    "FILEN",
+    "GETPID",
+    "GOBACK",
+    "Makefiles",
     "NUMVAL",
-    "setopt"
+    "setopt",
+    "unparse"
   ],
   "ignoreWords": [],
   "import": [],

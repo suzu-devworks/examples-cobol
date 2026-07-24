@@ -6,6 +6,7 @@
        01  num  BINARY-LONG.
        01  i   BINARY-LONG.
        01  summary BINARY-LONG.
+       01  display-summary PIC ZZZ,ZZZ,ZZ9 VALUE SPACE.
 
        PROCEDURE DIVISION.
            DISPLAY "Please enter an integer 9(9): " WITH NO ADVANCING
@@ -15,6 +16,7 @@
                ADD i TO summary
            END-PERFORM
 
-           DISPLAY "The sum is " summary
+           MOVE summary TO display-summary
+           DISPLAY "The sum is " display-summary "."
            DISPLAY SPACE
            STOP RUN.

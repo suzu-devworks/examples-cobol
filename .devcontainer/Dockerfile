@@ -10,6 +10,7 @@ RUN set -x \
     # Install libraries
     && apt -y install --no-install-recommends \
         gnucobol \
+        uuid-dev \
     ;
 
 # Clean up
