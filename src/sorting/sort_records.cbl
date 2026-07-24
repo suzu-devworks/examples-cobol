@@ -41,10 +41,10 @@
            05  WS-OUT-COUNT            PIC 9(006) VALUE 0.
 
        01  WS-VARS.
-           05  WS-I                    PIC 9(005) COMP-5 VALUE 0.
+           05  WS-USAGE-STR            PIC X(100).
            05  WS-PID                  PIC 9(008).
-           05 EOF-FLG                  PIC X(001) VALUE "N".
-           05 EOF-WORK-FLG             PIC X(001) VALUE "N".
+           05  EOF-FLG                 PIC X(001) VALUE "N".
+           05  EOF-WORK-FLG            PIC X(001) VALUE "N".
 
        PROCEDURE DIVISION.
            PERFORM INITIALIZE-PROCESS
@@ -93,8 +93,12 @@
            OPEN OUTPUT OUT-FILE.
 
        DISPLAY-USAGE.
-           DISPLAY "Usage: " FUNCTION MODULE-CALLER-ID
-               " [IN-FILENAME] [OUT-FILENAME]".
+           STRING
+               "Usage: sort_records"
+               " [IN-FILENAME] [OUT-FILENAME]"
+               " [KEY-START] [KEY-LEN]"
+               INTO WS-USAGE-STR.
+           DISPLAY "Usage: " WS-USAGE-STR.
 
        BUILD-WORK-FILE-PATH.
            CALL "C$GETPID" RETURNING WS-PID

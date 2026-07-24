@@ -58,6 +58,7 @@
            05  WS-OUT-COUNT            PIC 9(006) VALUE 0.
 
        01  WS-VARS.
+           05  WS-USAGE-STR            PIC X(100).
            05  WS-I                    PIC 9(005) COMP-5 VALUE 0.
            05  WS-PID                  PIC 9(008).
 
@@ -137,8 +138,12 @@
            OPEN OUTPUT OUT-FILE.
 
        DISPLAY-USAGE.
-           DISPLAY "Usage: sort_records_legacy [IN-FILENAME] [OUT-FILEN
-      -        "AME]".
+           STRING
+               "Usage: sort_records_legacy"
+               " [IN-FILENAME] [OUT-FILENAME]"
+               " [KEY-START] [KEY-LEN]"
+               INTO WS-USAGE-STR.
+           DISPLAY "Usage: " WS-USAGE-STR.
 
        BUILD-WORK-FILE-PATH.
            CALL "C$GETPID" RETURNING WS-PID
