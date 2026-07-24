@@ -54,7 +54,6 @@
 
       * --- Initialize process
        INITIALIZE-PROCESS.
-           DISPLAY "Sort started."
            ACCEPT WS-ARG-COUNT FROM ARGUMENT-NUMBER
            IF WS-ARG-COUNT < 2
                PERFORM DISPLAY-USAGE
@@ -69,6 +68,7 @@
                STOP RUN
            END-IF
 
+           DISPLAY "Sort started."
            DISPLAY "INPUT FILE:   " FUNCTION TRIM(WS-IN-FILE-PATH)
            DISPLAY "OUTPUT FILE:  " FUNCTION TRIM(WS-OUT-FILE-PATH)
 

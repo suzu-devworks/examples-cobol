@@ -74,7 +74,6 @@ search
 
       * --- Initialize process
        INITIALIZE-PROCESS.
-           DISPLAY "Generator started."
            ACCEPT WS-ARG-COUNT FROM ARGUMENT-NUMBER
            IF WS-ARG-COUNT < 1
                PERFORM DISPLAY-USAGE
@@ -102,6 +101,8 @@ search
            IF WS-COUNT-STR NOT = SPACES
                COMPUTE WS-MAX-RECORDS = FUNCTION NUMVAL(WS-COUNT-STR)
            END-IF
+
+           DISPLAY "Generator started."
 
            MOVE FUNCTION CURRENT-DATE TO WS-CURRENT-DATE
            DISPLAY "CURRENT YEAR: " WS-YEAR
