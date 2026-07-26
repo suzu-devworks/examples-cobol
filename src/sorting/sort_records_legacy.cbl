@@ -4,58 +4,58 @@
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
-           SELECT IN-FILE  ASSIGN TO WS-IN-FILE-PATH
-                           ORGANIZATION IS LINE SEQUENTIAL.
-           SELECT OUT-FILE ASSIGN TO WS-OUT-FILE-PATH
-                           ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT IN1-FILE     ASSIGN TO WS-IN1-FILE-PATH
+                               ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT OUT1-FILE    ASSIGN TO WS-OUT1-FILE-PATH
+                               ORGANIZATION IS LINE SEQUENTIAL.
 
            *> work file for sorting
-           SELECT WORK-F1 ASSIGN TO WS-WORK-F1-PATH
-                           ORGANIZATION IS LINE SEQUENTIAL.
-           SELECT WORK-F2 ASSIGN TO WS-WORK-F2-PATH
-                           ORGANIZATION IS LINE SEQUENTIAL.
-           SELECT WORK-F3 ASSIGN TO WS-WORK-F3-PATH
-                           ORGANIZATION IS LINE SEQUENTIAL.
-           SELECT WORK-F4 ASSIGN TO WS-WORK-F4-PATH
-                           ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT WORK1-FILE   ASSIGN TO WS-WORK1-PATH
+                               ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT WORK2-FILE   ASSIGN TO WS-WORK2-PATH
+                               ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT WORK3-FILE   ASSIGN TO WS-WORK3-PATH
+                               ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT WORK4-FILE   ASSIGN TO WS-WORK4-PATH
+                               ORGANIZATION IS LINE SEQUENTIAL.
 
        DATA DIVISION.
        FILE SECTION.
-       FD  IN-FILE.
-       01  IN-REC          PIC X(100).
-       FD  OUT-FILE.
-       01  OUT-REC         PIC X(100).
-       FD  WORK-F1.
+       FD  IN1-FILE.
+       01  IN1-REC         PIC X(100).
+       FD  OUT1-FILE.
+       01  OUT1-REC        PIC X(100).
+       FD  WORK1-FILE.
        01  W1-REC          PIC X(100).
-       FD  WORK-F2.
+       FD  WORK2-FILE.
        01  W2-REC          PIC X(100).
-       FD  WORK-F3.
+       FD  WORK3-FILE.
        01  W3-REC          PIC X(100).
-       FD  WORK-F4.
+       FD  WORK4-FILE.
        01  W4-REC          PIC X(100).
 
        WORKING-STORAGE SECTION.
       *--- For receiving command line arguments
        01  WS-ARGS.
            05  WS-ARG-COUNT            PIC 9(002) VALUE 0.
-           05  WS-IN-FILE-PATH         PIC X(1024) VALUE SPACES.
-           05  WS-OUT-FILE-PATH        PIC X(1024) VALUE SPACES.
+           05  WS-IN1-FILE-PATH        PIC X(1024) VALUE SPACES.
+           05  WS-OUT1-FILE-PATH       PIC X(1024) VALUE SPACES.
            05  WS-ARG-KEY-START        PIC 9(003) VALUE 1. *> Starting position (starting from 1)
            05  WS-ARG-KEY-LEN          PIC 9(003) VALUE 4. *> Number of character
 
        01  WS-WORK-FILES.
-           05  WS-WORK-F1-PATH         PIC X(1024) VALUE SPACES.
-           05  WS-WORK-F2-PATH         PIC X(1024) VALUE SPACES.
-           05  WS-WORK-F3-PATH         PIC X(1024) VALUE SPACES.
-           05  WS-WORK-F4-PATH         PIC X(1024) VALUE SPACES.
+           05  WS-WORK1-PATH           PIC X(1024) VALUE SPACES.
+           05  WS-WORK2-PATH           PIC X(1024) VALUE SPACES.
+           05  WS-WORK3-PATH           PIC X(1024) VALUE SPACES.
+           05  WS-WORK4-PATH           PIC X(1024) VALUE SPACES.
 
-       01  WS-WORK-FILE-ARRAY REDEFINES WS-WORK-FILES.
-           05 WS-WORK-FILE-PATH OCCURS 4 TIMES PIC X(1024).
-       01  WS-WORK-IDX                 PIC 9(001) VALUE 0.
+       01  WS-WORKS-ARRAY REDEFINES WS-WORK-FILES.
+           05 WS-WORKS-PATH OCCURS 4 TIMES PIC X(1024).
+       01  WS-WORKS-IDX                PIC 9(001) VALUE 0.
 
        01  WS-COUNTERS.
-           05  WS-IN-COUNT             PIC 9(006) VALUE 0.
-           05  WS-OUT-COUNT            PIC 9(006) VALUE 0.
+           05  WS-IN1-COUNT            PIC 9(006) VALUE 0.
+           05  WS-OUT1-COUNT           PIC 9(006) VALUE 0.
            05  WS-I                    PIC 9(005) COMP-5 VALUE 0.
 
        01  WS-VARS.
@@ -68,7 +68,7 @@
 
       * --- For division phase ---
        01  WS-DIV-CTRL.
-           05  IN-EOF                  PIC X(1) VALUE "N".
+           05  IN1-EOF                 PIC X(1) VALUE "N".
            05  WS-DIV-TOGGLE           PIC 9(1) VALUE 1.
 
       * --- For merge phase ---
@@ -105,17 +105,17 @@
                STOP RUN
            END-IF
 
-           ACCEPT WS-IN-FILE-PATH  FROM ARGUMENT-VALUE
-           ACCEPT WS-OUT-FILE-PATH FROM ARGUMENT-VALUE
+           ACCEPT WS-IN1-FILE-PATH     FROM ARGUMENT-VALUE
+           ACCEPT WS-OUT1-FILE-PATH    FROM ARGUMENT-VALUE
 
-           IF WS-IN-FILE-PATH = SPACES OR WS-OUT-FILE-PATH = SPACES
+           IF WS-IN1-FILE-PATH = SPACES OR WS-OUT1-FILE-PATH = SPACES
                PERFORM DISPLAY-USAGE
                STOP RUN
            END-IF
 
            DISPLAY "Sort started."
-           DISPLAY "INPUT FILE:   " FUNCTION TRIM(WS-IN-FILE-PATH)
-           DISPLAY "OUTPUT FILE:  " FUNCTION TRIM(WS-OUT-FILE-PATH)
+           DISPLAY "INPUT1 FILE:  " FUNCTION TRIM(WS-IN1-FILE-PATH)
+           DISPLAY "OUTPUT1 FILE: " FUNCTION TRIM(WS-OUT1-FILE-PATH)
 
            PERFORM BUILD-WORK-FILE-PATH
 
@@ -134,8 +134,8 @@
 
            DISPLAY "SORT KEY:     " WS-ARG-KEY-START ":" WS-ARG-KEY-LEN
 
-           OPEN INPUT IN-FILE
-           OPEN OUTPUT OUT-FILE.
+           OPEN INPUT IN1-FILE
+           OPEN OUTPUT OUT1-FILE.
 
        DISPLAY-USAGE.
            STRING
@@ -146,31 +146,31 @@
 
        BUILD-WORK-FILE-PATH.
            CALL "C$GETPID" RETURNING WS-PID
-           PERFORM VARYING WS-WORK-IDX FROM 1 BY 1
-                   UNTIL WS-WORK-IDX > 4
+           PERFORM VARYING WS-WORKS-IDX FROM 1 BY 1
+                   UNTIL WS-WORKS-IDX > 4
                STRING
-                   WS-OUT-FILE-PATH DELIMITED BY SPACE
-                   ".tmp@w" WS-WORK-IDX DELIMITED BY SIZE
+                   WS-OUT1-FILE-PATH DELIMITED BY SPACE
+                   ".tmp@w" WS-WORKS-IDX DELIMITED BY SIZE
                    "." WS-PID DELIMITED BY SIZE
-                   INTO WS-WORK-FILE-PATH(WS-WORK-IDX)
+                   INTO WS-WORKS-PATH(WS-WORKS-IDX)
            END-PERFORM
 
-           DISPLAY "WORK FILE 1:  " FUNCTION TRIM(WS-WORK-F1-PATH)
-           DISPLAY "WORK FILE 2:  " FUNCTION TRIM(WS-WORK-F2-PATH)
-           DISPLAY "WORK FILE 3:  " FUNCTION TRIM(WS-WORK-F3-PATH)
-           DISPLAY "WORK FILE 4:  " FUNCTION TRIM(WS-WORK-F4-PATH).
+           DISPLAY "WORK1 FILE: " FUNCTION TRIM(WS-WORK1-PATH)
+           DISPLAY "WORK2 FILE: " FUNCTION TRIM(WS-WORK2-PATH)
+           DISPLAY "WORK3 FILE: " FUNCTION TRIM(WS-WORK3-PATH)
+           DISPLAY "WORK4 FILE: " FUNCTION TRIM(WS-WORK4-PATH).
 
       * --- Terminate process
        TERMINATE-PROCESS.
-           DELETE FILE WORK-F1 WORK-F2 WORK-F3 WORK-F4
+           DELETE FILE WORK1-FILE WORK2-FILE WORK3-FILE WORK4-FILE
 
-           CLOSE IN-FILE
-           CLOSE OUT-FILE
-           DISPLAY "SUCCESS: Sort Completed."
-           DISPLAY "--------------------------"
-           DISPLAY "INPUT  READ COUNT:  " WS-IN-COUNT
-           DISPLAY "OUTPUT WRITE COUNT: " WS-OUT-COUNT
-           DISPLAY "--------------------------".
+           CLOSE IN1-FILE
+           CLOSE OUT1-FILE
+           DISPLAY "SUCCESS: Sort completed."
+           DISPLAY "------------------------------"
+           DISPLAY "INPUT1  READ  COUNT: " WS-IN1-COUNT
+           DISPLAY "OUTPUT1 WRITE COUNT: " WS-OUT1-COUNT
+           DISPLAY "------------------------------".
 
       * --- Main processing
        MAIN-PROCESS.
@@ -182,23 +182,23 @@
 
       * ---------------------------------------------
        INITIAL-DIVISION-PHASE.
-           OPEN OUTPUT WORK-F1 WORK-F2
+           OPEN OUTPUT WORK1-FILE WORK2-FILE
 
-           MOVE "N" TO IN-EOF
+           MOVE "N" TO IN1-EOF
            MOVE 1   TO WS-DIV-TOGGLE
 
-           PERFORM UNTIL IN-EOF = "Y"
+           PERFORM UNTIL IN1-EOF = "Y"
                MOVE 0 TO WS-REC-CNT
 
                *> [Safety guard] Read so as not to exceed the maximum number of arrays
-               PERFORM UNTIL WS-REC-CNT = WS-REC-MAX OR IN-EOF = "Y"
-                   READ IN-FILE
+               PERFORM UNTIL WS-REC-CNT = WS-REC-MAX OR IN1-EOF = "Y"
+                   READ IN1-FILE
                        AT END
-                           MOVE "Y" TO IN-EOF
+                           MOVE "Y" TO IN1-EOF
                        NOT AT END
-                           ADD 1 TO WS-IN-COUNT
+                           ADD 1 TO WS-IN1-COUNT
                            ADD 1 TO WS-REC-CNT
-                           MOVE IN-REC TO WS-REC(WS-REC-CNT)
+                           MOVE IN1-REC TO WS-REC(WS-REC-CNT)
                    END-READ
                END-PERFORM
 
@@ -216,7 +216,7 @@
                END-IF
            END-PERFORM
 
-           CLOSE WORK-F1 WORK-F2.
+           CLOSE WORK1-FILE WORK2-FILE.
 
        QUICK-SORT-START.
            MOVE WS-ARG-KEY-START TO WS-KEY-START
@@ -259,8 +259,8 @@
            END-PERFORM.
 
        MERGE-PASS-1-TO-2.
-           OPEN INPUT WORK-F1 WORK-F2
-           OPEN OUTPUT WORK-F3 WORK-F4
+           OPEN INPUT WORK1-FILE WORK2-FILE
+           OPEN OUTPUT WORK3-FILE WORK4-FILE
 
            MOVE "N" TO W1-EOF W2-EOF
            MOVE LOW-VALUES TO W1-PREV-KEY W2-PREV-KEY
@@ -281,7 +281,8 @@
                END-IF
            END-PERFORM
 
-           CLOSE WORK-F1 WORK-F2 WORK-F3 WORK-F4.
+           CLOSE WORK1-FILE WORK2-FILE
+           CLOSE WORK3-FILE WORK4-FILE.
 
        MERGE-SINGLE-RUN-12.
            PERFORM UNTIL (W1-EOF = "Y" OR W1-CUR-KEY < W1-PREV-KEY) AND
@@ -311,8 +312,8 @@
            MOVE LOW-VALUES TO W1-PREV-KEY W2-PREV-KEY.
 
        MERGE-PASS-2-TO-1.
-           OPEN INPUT WORK-F3 WORK-F4
-           OPEN OUTPUT WORK-F1 WORK-F2
+           OPEN INPUT WORK3-FILE WORK4-FILE
+           OPEN OUTPUT WORK1-FILE WORK2-FILE
 
            MOVE "N" TO W3-EOF W4-EOF
            MOVE LOW-VALUES TO W3-PREV-KEY W4-PREV-KEY
@@ -333,7 +334,8 @@
                END-IF
            END-PERFORM
 
-           CLOSE WORK-F3 WORK-F4 WORK-F1 WORK-F2.
+           CLOSE WORK3-FILE WORK4-FILE.
+           CLOSE WORK1-FILE WORK2-FILE.
 
        MERGE-SINGLE-RUN-34.
            PERFORM UNTIL (W3-EOF = "Y" OR W3-CUR-KEY < W3-PREV-KEY) AND
@@ -364,7 +366,7 @@
 
        READ-WORK1.
            MOVE W1-CUR-KEY TO W1-PREV-KEY
-           READ WORK-F1
+           READ WORK1-FILE
                AT END MOVE "Y" TO W1-EOF
                       MOVE HIGH-VALUES TO W1-CUR-KEY
                NOT AT END MOVE SPACE TO W1-CUR-KEY
@@ -374,7 +376,7 @@
 
        READ-WORK2.
            MOVE W2-CUR-KEY TO W2-PREV-KEY
-           READ WORK-F2
+           READ WORK2-FILE
                AT END MOVE "Y" TO W2-EOF
                       MOVE HIGH-VALUES TO W2-CUR-KEY
                NOT AT END MOVE SPACE TO W2-CUR-KEY
@@ -384,7 +386,7 @@
 
        READ-WORK3.
            MOVE W3-CUR-KEY TO W3-PREV-KEY
-           READ WORK-F3
+           READ WORK3-FILE
                AT END MOVE "Y" TO W3-EOF
                       MOVE HIGH-VALUES TO W3-CUR-KEY
                NOT AT END MOVE SPACE TO W3-CUR-KEY
@@ -394,7 +396,7 @@
 
        READ-WORK4.
            MOVE W4-CUR-KEY TO W4-PREV-KEY
-           READ WORK-F4
+           READ WORK4-FILE
                AT END MOVE "Y" TO W4-EOF
                       MOVE HIGH-VALUES TO W4-CUR-KEY
                NOT AT END MOVE SPACE TO W4-CUR-KEY
@@ -440,27 +442,27 @@
            END-IF.
 
        WRITE-OUTPUT-FROM-W1.
-           OPEN INPUT WORK-F1
+           OPEN INPUT WORK1-FILE
            MOVE "N" TO W1-EOF
            PERFORM UNTIL W1-EOF = "Y"
-               READ WORK-F1
+               READ WORK1-FILE
                    AT END MOVE "Y" TO W1-EOF
                    NOT AT END
-                       WRITE OUT-REC FROM W1-REC
-                       ADD 1 TO WS-OUT-COUNT
+                       WRITE OUT1-REC FROM W1-REC
+                       ADD 1 TO WS-OUT1-COUNT
                END-READ
            END-PERFORM
-           CLOSE WORK-F1.
+           CLOSE WORK1-FILE.
 
        WRITE-OUTPUT-FROM-W3.
-           OPEN INPUT WORK-F3
+           OPEN INPUT WORK3-FILE
            MOVE "N" TO W3-EOF
            PERFORM UNTIL W3-EOF = "Y"
-               READ WORK-F3
+               READ WORK3-FILE
                    AT END MOVE "Y" TO W3-EOF
                    NOT AT END
-                       WRITE OUT-REC FROM W3-REC
-                       ADD 1 TO WS-OUT-COUNT
+                       WRITE OUT1-REC FROM W3-REC
+                       ADD 1 TO WS-OUT1-COUNT
                END-READ
            END-PERFORM
-           CLOSE WORK-F3.
+           CLOSE WORK3-FILE.

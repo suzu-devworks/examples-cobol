@@ -4,34 +4,35 @@
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
-           SELECT IN-FILE  ASSIGN TO WS-IN-FILE-PATH
-                           ORGANIZATION IS LINE SEQUENTIAL.
-           SELECT OPTIONAL OUT-FILE ASSIGN TO WS-OUT-FILE-PATH
-                           ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT IN1-FILE     ASSIGN TO WS-IN1-FILE-PATH
+                               ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT OPTIONAL OUT1-FILE ASSIGN TO WS-OUT1-FILE-PATH
+                               ORGANIZATION IS LINE SEQUENTIAL.
 
        DATA DIVISION.
        FILE SECTION.
-       FD  IN-FILE.
-       01  IN-REC      PIC X(050).
-       FD  OUT-FILE.
-       01  OUT-REC    PIC X(050).
+       FD  IN1-FILE.
+       01  IN1-REC      PIC X(050).
+       FD  OUT1-FILE.
+       01  OUT1-REC    PIC X(050).
 
        WORKING-STORAGE SECTION.
       *--- For receiving command line arguments
        01  WS-ARGS.
            05  WS-ARG-COUNT        PIC 9(002) VALUE 0.
-           05  WS-IN-FILE-PATH     PIC X(1024) VALUE SPACES.
-           05  WS-OUT-BASE-PATH    PIC X(1024) VALUE SPACES.
+           05  WS-IN1-FILE-PATH    PIC X(1024) VALUE SPACES.
+           05  WS-OUT1-FILE-BASE   PIC X(1024) VALUE SPACES.
 
        01  WS-FILES.
-           05  WS-OUT-FILE-PATH    PIC X(1024) VALUE SPACES.
+           05  WS-OUT1-FILE-PATH   PIC X(1024) VALUE SPACES.
 
        01  WS-COUNTERS.
-           05  WS-IN-COUNT         PIC 9(006) VALUE 0.
-           05  WS-OUT-COUNT        PIC 9(006) VALUE 0.
-           05  WS-OUT-DEPT-COUNT   PIC 9(006) VALUE 0.
+           05  WS-IN1-COUNT        PIC 9(006) VALUE 0.
+           05  WS-OUT1-COUNT       PIC 9(006) VALUE 0.
+           05  WS-OUT1-DEPT-COUNT  PIC 9(006) VALUE 0.
 
-       COPY emp_rec REPLACING ==:PREFIX:== BY ==WK==.
+       01  WS-IN1-REC.
+       COPY emp_rec.
            05  FILLER              PIC X(008).
 
        01  WS-VARS.
@@ -52,18 +53,18 @@
                STOP RUN
            END-IF
 
-           ACCEPT WS-IN-FILE-PATH  FROM ARGUMENT-VALUE
-           ACCEPT WS-OUT-BASE-PATH FROM ARGUMENT-VALUE
+           ACCEPT WS-IN1-FILE-PATH     FROM ARGUMENT-VALUE
+           ACCEPT WS-OUT1-FILE-BASE    FROM ARGUMENT-VALUE
 
-           IF WS-IN-FILE-PATH = SPACES OR WS-OUT-BASE-PATH = SPACES
+           IF WS-IN1-FILE-PATH = SPACES OR WS-OUT1-FILE-BASE = SPACES
                PERFORM DISPLAY-USAGE
                STOP RUN
            END-IF
 
            DISPLAY "Separating started."
-           DISPLAY "INPUT FILE:  " FUNCTION TRIM(WS-IN-FILE-PATH)
+           DISPLAY "INPUT1 FILE:  " FUNCTION TRIM(WS-IN1-FILE-PATH)
 
-           OPEN INPUT IN-FILE.
+           OPEN INPUT IN1-FILE.
 
        DISPLAY-USAGE.
            STRING "separate_by_dept_multi"
@@ -73,46 +74,47 @@
 
       * --- Terminate process
        TERMINATE-PROCESS.
-           CLOSE IN-FILE.
-           DISPLAY "SUCCESS: Separating Completed."
-           DISPLAY "--------------------------"
-           DISPLAY "INPUT  READ COUNT:  " WS-IN-COUNT
-           DISPLAY "OUTPUT WRITE COUNT: " WS-OUT-COUNT
-           DISPLAY "--------------------------".
+           CLOSE IN1-FILE.
+           DISPLAY "SUCCESS: Separating completed."
+           DISPLAY "------------------------------"
+           DISPLAY "INPUT1  READ  COUNT: " WS-IN1-COUNT
+           DISPLAY "OUTPUT1 WRITE COUNT: " WS-OUT1-COUNT
+           DISPLAY "------------------------------".
 
       * --- Main processing
        MAIN-PROCESS.
            PERFORM READ-IN-FILE
 
-           PERFORM UNTIL WK-EMP-REC = HIGH-VALUES
-               MOVE WK-EMP-DEPT-ID TO WS-DEPT-ID
-               STRING WS-OUT-BASE-PATH DELIMITED BY SPACE
+           PERFORM UNTIL WS-IN1-REC = HIGH-VALUES
+               MOVE EMP-DEPT-ID TO WS-DEPT-ID
+
+               STRING WS-OUT1-FILE-BASE DELIMITED BY SPACE
                    "."
                    WS-DEPT-ID DELIMITED BY SIZE
-                   INTO WS-OUT-FILE-PATH
-               DISPLAY "OUTPUT FILE: " FUNCTION TRIM(WS-OUT-FILE-PATH)
+                   INTO WS-OUT1-FILE-PATH
+               DISPLAY "OUTPUT FILE: " FUNCTION TRIM(WS-OUT1-FILE-PATH)
 
-               OPEN EXTEND OUT-FILE
-               MOVE 0 TO WS-OUT-DEPT-COUNT
+               OPEN EXTEND OUT1-FILE
+               MOVE 0 TO WS-OUT1-DEPT-COUNT
 
-               PERFORM UNTIL WK-EMP-REC = HIGH-VALUES OR
-                       WS-DEPT-ID NOT = WK-EMP-DEPT-ID
+               PERFORM UNTIL WS-IN1-REC = HIGH-VALUES OR
+                       WS-DEPT-ID NOT = EMP-DEPT-ID
 
-                   WRITE OUT-REC FROM WK-EMP-REC
-                   ADD 1 TO WS-OUT-COUNT
-                   ADD 1 TO WS-OUT-DEPT-COUNT
+                   WRITE OUT1-REC FROM WS-IN1-REC
+                   ADD 1 TO WS-OUT1-COUNT
+                   ADD 1 TO WS-OUT1-DEPT-COUNT
 
                    PERFORM READ-IN-FILE
                END-PERFORM
 
-               CLOSE OUT-FILE
-               DISPLAY "OUTPUT WRITE COUNT: " WS-OUT-DEPT-COUNT
+               CLOSE OUT1-FILE
+               DISPLAY "OUTPUT WRITE COUNT: " WS-OUT1-DEPT-COUNT
 
            END-PERFORM.
 
        READ-IN-FILE.
-           READ IN-FILE INTO WK-EMP-REC
-             AT END MOVE HIGH-VALUES TO WK-EMP-REC
+           READ IN1-FILE INTO WS-IN1-REC
+             AT END MOVE HIGH-VALUES TO WS-IN1-REC
              NOT AT END
-                   ADD 1 TO WS-IN-COUNT
+                   ADD 1 TO WS-IN1-COUNT
            END-READ.

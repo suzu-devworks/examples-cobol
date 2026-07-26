@@ -4,33 +4,35 @@
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
-           SELECT IN-FILE  ASSIGN TO WS-IN-FILE-PATH
-                           ORGANIZATION IS LINE SEQUENTIAL.
-           SELECT OUT-FILE ASSIGN TO WS-OUT-FILE-PATH
-                           ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT IN1-FILE     ASSIGN TO WS-IN1-FILE-PATH
+                               ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT OUT1-FILE    ASSIGN TO WS-OUT1-FILE-PATH
+                               ORGANIZATION IS LINE SEQUENTIAL.
 
        DATA DIVISION.
        FILE SECTION.
-       FD  IN-FILE.
-       01  IN-REC      PIC X(050).
-       FD  OUT-FILE.
-       01  OUT-REC     PIC X(050).
+       FD  IN1-FILE.
+       01  IN1-REC                 PIC X(050).
+       FD  OUT1-FILE.
+       01  OUT1-REC                PIC X(050).
 
        WORKING-STORAGE SECTION.
       *--- For receiving command line arguments
        01  WS-ARGS.
            05  WS-ARG-COUNT        PIC 9(002) VALUE 0.
-           05  WS-IN-FILE-PATH     PIC X(1024) VALUE SPACES.
-           05  WS-OUT-FILE-PATH    PIC X(1024) VALUE SPACES.
+           05  WS-IN1-FILE-PATH    PIC X(1024) VALUE SPACES.
+           05  WS-OUT1-FILE-PATH   PIC X(1024) VALUE SPACES.
 
        01  WS-COUNTERS.
-           05  WS-IN-COUNT         PIC 9(006) VALUE 0.
-           05  WS-OUT-COUNT        PIC 9(006) VALUE 0.
+           05  WS-IN1-COUNT        PIC 9(006) VALUE 0.
+           05  WS-OUT1-COUNT       PIC 9(006) VALUE 0.
 
-       COPY emp_rec REPLACING ==:PREFIX:== BY ==WK==.
+       01  WS-IN1-REC.
+       COPY emp_rec.
            05  FILLER              PIC X(008).
 
-       COPY dept_rec REPLACING ==:PREFIX:== BY ==WK==.
+       01  WS-OUT1-REC.
+       COPY dept_rec.
            05  FILLER              PIC X(016).
 
        01  WS-VARS.
@@ -51,20 +53,20 @@
                STOP RUN
            END-IF
 
-           ACCEPT WS-IN-FILE-PATH  FROM ARGUMENT-VALUE
-           ACCEPT WS-OUT-FILE-PATH FROM ARGUMENT-VALUE
+           ACCEPT WS-IN1-FILE-PATH     FROM ARGUMENT-VALUE
+           ACCEPT WS-OUT1-FILE-PATH    FROM ARGUMENT-VALUE
 
-           IF WS-IN-FILE-PATH = SPACES OR WS-OUT-FILE-PATH = SPACES
+           IF WS-IN1-FILE-PATH = SPACES OR WS-OUT1-FILE-PATH = SPACES
                PERFORM DISPLAY-USAGE
                STOP RUN
            END-IF
 
            DISPLAY "Grouping started."
-           DISPLAY "INPUT FILE:   " FUNCTION TRIM(WS-IN-FILE-PATH)
-           DISPLAY "OUTPUT FILE:  " FUNCTION TRIM(WS-OUT-FILE-PATH)
+           DISPLAY "INPUT1 FILE:  " FUNCTION TRIM(WS-IN1-FILE-PATH)
+           DISPLAY "OUTPUT2 FILE: " FUNCTION TRIM(WS-OUT1-FILE-PATH)
 
-           OPEN INPUT IN-FILE
-           OPEN OUTPUT OUT-FILE.
+           OPEN INPUT IN1-FILE
+           OPEN OUTPUT OUT1-FILE.
 
        DISPLAY-USAGE.
            STRING "group_by_dept [INPUT_FILE] [OUTPUT_FILE]"
@@ -73,57 +75,58 @@
 
       * --- Terminate process
        TERMINATE-PROCESS.
-           CLOSE IN-FILE.
-           CLOSE OUT-FILE.
-           DISPLAY "SUCCESS: Grouping Completed."
-           DISPLAY "--------------------------"
-           DISPLAY "INPUT  READ COUNT:  " WS-IN-COUNT
-           DISPLAY "OUTPUT WRITE COUNT: " WS-OUT-COUNT
-           DISPLAY "--------------------------".
+           CLOSE IN1-FILE.
+           CLOSE OUT1-FILE.
+           DISPLAY "SUCCESS: Grouping completed."
+           DISPLAY "------------------------------"
+           DISPLAY "INPUT1  READ  COUNT: " WS-IN1-COUNT
+           DISPLAY "OUTPUT1 WRITE COUNT: " WS-OUT1-COUNT
+           DISPLAY "------------------------------".
 
       * --- Main processing
        MAIN-PROCESS.
-           PERFORM READ-IN-FILE
+           PERFORM READ-IN1-FILE
 
-           PERFORM UNTIL WK-EMP-REC = HIGH-VALUES
-               INITIALIZE WK-DEPT-REC
-               MOVE WK-EMP-DEPT-ID TO WK-DEPT-ID
+           PERFORM UNTIL WS-IN1-REC = HIGH-VALUES
+               INITIALIZE WS-OUT1-REC
+               MOVE EMP-DEPT-ID TO DEPT-ID
                MOVE 0 TO WS-DEPT-MAX-SALARY
 
-               PERFORM UNTIL WK-EMP-REC = HIGH-VALUES OR
-                           NOT WK-EMP-DEPT-ID = WK-DEPT-ID
-                   PERFORM EDIT-DEPT-REC
-                   PERFORM READ-IN-FILE
+               PERFORM UNTIL WS-IN1-REC = HIGH-VALUES OR
+                       NOT EMP-DEPT-ID = DEPT-ID
+                   PERFORM EDIT-OUT1-REC
+                   PERFORM READ-IN1-FILE
                END-PERFORM
 
-               PERFORM WRITE-DEPT-FILE
+               PERFORM WRITE-OUT1-FILE
            END-PERFORM.
 
-       EDIT-DEPT-REC.
-           MOVE WK-EMP-DEPT-ID TO WK-DEPT-ID
-           MOVE WK-EMP-DEPT-NAME TO WK-DEPT-NAME
+       EDIT-OUT1-REC.
+           MOVE EMP-DEPT-ID TO DEPT-ID
+           MOVE EMP-DEPT-NAME TO DEPT-NAME
 
-           IF WS-DEPT-MAX-SALARY < WK-EMP-SALARY
-               MOVE WK-EMP-ID TO WK-DEPT-MANAGER-ID
-               MOVE WK-EMP-NAME TO WK-DEPT-MANAGER-NAME
-               MOVE WK-EMP-SALARY TO WS-DEPT-MAX-SALARY
+           IF WS-DEPT-MAX-SALARY < EMP-SALARY
+               MOVE EMP-ID TO DEPT-MANAGER-ID
+               MOVE EMP-NAME TO DEPT-MANAGER-NAME
+
+               MOVE EMP-SALARY TO WS-DEPT-MAX-SALARY
            END-IF
 
-           ADD 1 TO WK-DEPT-MEMBER-COUNT.
+           ADD 1 TO DEPT-MEMBER-COUNT.
 
-       WRITE-DEPT-FILE.
-           WRITE OUT-REC FROM WK-DEPT-REC
-           ADD 1 TO WS-OUT-COUNT.
-           DISPLAY "DEPT-ID: " WK-DEPT-ID
-                   " DEPT-NAME: " WK-DEPT-NAME
-                   " MANAGER-ID: " WK-DEPT-MANAGER-ID
-                   " MANAGER-NAME: " WK-DEPT-MANAGER-NAME
-                   " MEMBER-COUNT: " WK-DEPT-MEMBER-COUNT
+       WRITE-OUT1-FILE.
+           WRITE OUT1-REC FROM WS-OUT1-REC
+           ADD 1 TO WS-OUT1-COUNT.
+           DISPLAY "DEPT-ID: " DEPT-ID
+                   " DEPT-NAME: " DEPT-NAME
+                   " MANAGER-ID: " DEPT-MANAGER-ID
+                   " MANAGER-NAME: " DEPT-MANAGER-NAME
+                   " MEMBER-COUNT: " DEPT-MEMBER-COUNT
                    " MAX-SALARY: " WS-DEPT-MAX-SALARY.
 
-       READ-IN-FILE.
-           READ IN-FILE INTO WK-EMP-REC
-             AT END MOVE HIGH-VALUES TO WK-EMP-REC
+       READ-IN1-FILE.
+           READ IN1-FILE INTO WS-IN1-REC
+             AT END MOVE HIGH-VALUES TO WS-IN1-REC
              NOT AT END
-                   ADD 1 TO WS-IN-COUNT
+                   ADD 1 TO WS-IN1-COUNT
            END-READ.

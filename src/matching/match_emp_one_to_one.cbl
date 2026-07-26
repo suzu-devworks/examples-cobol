@@ -4,12 +4,12 @@
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
-           SELECT IN1-FILE  ASSIGN TO WS-IN1-FILE-PATH
-                           ORGANIZATION IS LINE SEQUENTIAL.
-           SELECT IN2-FILE  ASSIGN TO WS-IN2-FILE-PATH
-                           ORGANIZATION IS LINE SEQUENTIAL.
-           SELECT OUT1-FILE ASSIGN TO WS-OUT1-FILE-PATH
-                           ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT IN1-FILE     ASSIGN TO WS-IN1-FILE-PATH
+                               ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT IN2-FILE     ASSIGN TO WS-IN2-FILE-PATH
+                               ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT OUT1-FILE    ASSIGN TO WS-OUT1-FILE-PATH
+                               ORGANIZATION IS LINE SEQUENTIAL.
 
        DATA DIVISION.
        FILE SECTION.
@@ -33,14 +33,16 @@
            05  WS-IN2-COUNT        PIC 9(006) VALUE 0.
            05  WS-OUT1-COUNT       PIC 9(006) VALUE 0.
 
+       01  WS-IN1-REC.
        COPY emp_rec REPLACING ==:PREFIX:== BY ==WK-IN1==.
            05  FILLER              PIC X(008).
 
+       01  WS-IN2-REC.
        COPY emp_rec REPLACING ==:PREFIX:== BY ==WK-IN2==.
            05  FILLER              PIC X(008).
 
-       01  WK-OUT-REC.
-           05  WK-EMP-ID           PIC 9(004).
+       01  WS-OUT1-REC.
+           05  EMP-ID              PIC 9(004).
            05  FILLER              PIC X(001).
            05  LEFT-REC            PIC X(050).
            05  RIGHT-REC           PIC X(050).
@@ -62,9 +64,9 @@
                STOP RUN
            END-IF
 
-           ACCEPT WS-IN1-FILE-PATH  FROM ARGUMENT-VALUE
-           ACCEPT WS-IN2-FILE-PATH  FROM ARGUMENT-VALUE
-           ACCEPT WS-OUT1-FILE-PATH FROM ARGUMENT-VALUE
+           ACCEPT WS-IN1-FILE-PATH     FROM ARGUMENT-VALUE
+           ACCEPT WS-IN2-FILE-PATH     FROM ARGUMENT-VALUE
+           ACCEPT WS-OUT1-FILE-PATH    FROM ARGUMENT-VALUE
 
            IF WS-IN1-FILE-PATH = SPACES OR WS-IN2-FILE-PATH = SPACES OR
               WS-OUT1-FILE-PATH = SPACES
@@ -90,34 +92,34 @@
        TERMINATE-PROCESS.
            CLOSE IN1-FILE IN2-FILE
            CLOSE OUT1-FILE
-           DISPLAY "SUCCESS: Transforming Completed."
-           DISPLAY "--------------------------"
-           DISPLAY "INPUT1 READ COUNT:  " WS-IN1-COUNT
-           DISPLAY "INPUT2 READ COUNT:  " WS-IN2-COUNT
+           DISPLAY "SUCCESS: Transforming completed."
+           DISPLAY "------------------------------"
+           DISPLAY "INPUT1 READ  COUNT: " WS-IN1-COUNT
+           DISPLAY "INPUT2 READ  COUNT: " WS-IN2-COUNT
            DISPLAY "OUTPUT WRITE COUNT: " WS-OUT1-COUNT
-           DISPLAY "--------------------------".
+           DISPLAY "------------------------------".
 
       * --- Main processing
        MAIN-PROCESS.
            PERFORM READ-IN1-FILE
            PERFORM READ-IN2-FILE
 
-           PERFORM UNTIL WK-IN1-EMP-REC = HIGH-VALUES AND
-                         WK-IN2-EMP-REC = HIGH-VALUES
+           PERFORM UNTIL WS-IN1-REC = HIGH-VALUES AND
+                         WS-IN2-REC = HIGH-VALUES
 
                EVALUATE TRUE
-                   WHEN WK-IN1-EMP-ID = WK-IN2-EMP-ID
+                   WHEN EMP-ID OF WS-IN1-REC = EMP-ID OF WS-IN2-REC
                        PERFORM EDIT-BOTH-RECORDS
                        PERFORM WRITE-OUT1-FILE
                        PERFORM READ-IN1-FILE
                        PERFORM READ-IN2-FILE
 
-                   WHEN WK-IN1-EMP-ID < WK-IN2-EMP-ID
+                   WHEN EMP-ID OF WS-IN1-REC < EMP-ID OF WS-IN2-REC
                        PERFORM EDIT-LEFT-ONLY
                        PERFORM WRITE-OUT1-FILE
                        PERFORM READ-IN1-FILE
 
-                   WHEN WK-IN1-EMP-ID > WK-IN2-EMP-ID
+                   WHEN EMP-ID OF WS-IN1-REC > EMP-ID OF WS-IN2-REC
                        PERFORM EDIT-RIGHT-ONLY
                        PERFORM WRITE-OUT1-FILE
                        PERFORM READ-IN2-FILE
@@ -126,35 +128,35 @@
            END-PERFORM.
 
        EDIT-BOTH-RECORDS.
-           MOVE SPACE TO WK-OUT-REC
-           MOVE WK-IN1-EMP-REC TO LEFT-REC OF WK-OUT-REC
-           MOVE WK-IN2-EMP-REC TO RIGHT-REC OF WK-OUT-REC
-           MOVE WK-IN1-EMP-ID TO WK-EMP-ID OF WK-OUT-REC.
+           MOVE SPACE TO WS-OUT1-REC
+           MOVE EMP-REC OF WS-IN1-REC TO LEFT-REC
+           MOVE EMP-REC OF WS-IN2-REC TO RIGHT-REC
+           MOVE EMP-ID OF WS-IN1-REC TO EMP-ID OF WS-OUT1-REC.
 
        EDIT-LEFT-ONLY.
-           MOVE SPACE TO WK-OUT-REC
-           MOVE WK-IN1-EMP-REC TO LEFT-REC OF WK-OUT-REC
-           MOVE WK-IN1-EMP-ID TO WK-EMP-ID OF WK-OUT-REC.
+           MOVE SPACE TO WS-OUT1-REC
+           MOVE EMP-REC OF WS-IN1-REC TO LEFT-REC
+           MOVE EMP-ID OF WS-IN1-REC TO EMP-ID OF WS-OUT1-REC.
 
        EDIT-RIGHT-ONLY.
-           MOVE SPACE TO WK-OUT-REC
-           MOVE WK-IN2-EMP-REC TO RIGHT-REC OF WK-OUT-REC
-           MOVE WK-IN2-EMP-ID TO WK-EMP-ID OF WK-OUT-REC.
+           MOVE SPACE TO WS-OUT1-REC
+           MOVE EMP-REC OF WS-IN2-REC TO RIGHT-REC
+           MOVE EMP-ID OF WS-IN2-REC TO EMP-ID OF WS-OUT1-REC.
 
        WRITE-OUT1-FILE.
-           WRITE OUT1-REC FROM WK-OUT-REC
+           WRITE OUT1-REC FROM WS-OUT1-REC
            ADD 1 TO WS-OUT1-COUNT.
 
        READ-IN1-FILE.
-           READ IN1-FILE INTO WK-IN1-EMP-REC
-             AT END MOVE HIGH-VALUES TO WK-IN1-EMP-REC
+           READ IN1-FILE INTO WS-IN1-REC
+             AT END MOVE HIGH-VALUES TO WS-IN1-REC
              NOT AT END
                    ADD 1 TO WS-IN1-COUNT
            END-READ.
 
        READ-IN2-FILE.
-           READ IN2-FILE INTO WK-IN2-EMP-REC
-              AT END MOVE HIGH-VALUES TO WK-IN2-EMP-REC
+           READ IN2-FILE INTO WS-IN2-REC
+              AT END MOVE HIGH-VALUES TO WS-IN2-REC
               NOT AT END
                   ADD 1 TO WS-IN2-COUNT
            END-READ.
