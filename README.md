@@ -8,8 +8,8 @@ implementations that revisit familiar language features, common patterns, and
 interoperability-oriented workflows.
 
 It is a public knowledge base rather than a complete solution set. At the same
-time, it is a place where I can look back on COBOL development from 30 years
-ago and enjoy discovering how recent COBOL environments feel today. The
+time, it is a place where I can look back on COBOL development from around the
+year 2000 and enjoy discovering how recent COBOL environments feel today. The
 examples reflect my current understanding and are expected to evolve over time.
 
 ## What topics are covered?
