@@ -2,14 +2,15 @@
 
 ## What is this repository?
 
-This repository explores COBOL through small, focused programs in the `examples`
-collection. It records practical experiments and reference implementations that
-demonstrate language features, common patterns, and interoperability-oriented
-workflows.
+This repository is my COBOL notebook in the `examples` collection, built from
+small, focused programs. It records practical experiments and reference
+implementations that revisit familiar language features, common patterns, and
+interoperability-oriented workflows.
 
-Like other repositories in the collection, it is a public knowledge base rather
-than a complete solution set. The examples reflect current understanding and are
-expected to evolve over time.
+It is a public knowledge base rather than a complete solution set. At the same
+time, it is a place where I can look back on COBOL development from 30 years
+ago and enjoy discovering how recent COBOL environments feel today. The
+examples reflect my current understanding and are expected to evolve over time.
 
 ## What topics are covered?
 
