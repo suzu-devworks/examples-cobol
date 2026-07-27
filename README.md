@@ -22,3 +22,7 @@ examples reflect my current understanding and are expected to evolve over time.
 - Data generation examples and UUID-oriented helper flows
 - HTTP client usage from COBOL programs
 - Build organization with Makefiles across multiple example modules
+
+## References
+
+- [GNU COBOL official site](https://gnucobol.sourceforge.io/)
