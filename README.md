@@ -2,7 +2,7 @@
 
 ## What is this repository?
 
-This repository is my COBOL notebook in the `examples` collection, built from
+This repository is my COBOL "notebook" (or collection of examples), built from
 small, focused programs. It records practical experiments and reference
 implementations that revisit familiar language features, common patterns, and
 interoperability-oriented workflows.
