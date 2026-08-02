@@ -8,6 +8,10 @@
   "service": "dev",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "remoteUser": "vscode",
+  "mounts": [
+    "source=${localEnv:HOME}/.copilot/instructions,target=/home/vscode/.copilot/instructions,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.copilot/skills,target=/home/vscode/.copilot/skills,type=bind,consistency=cached"
+  ],
   "features": {
     "ghcr.io/devcontainers/features/node": {},
     "ghcr.io/devcontainers/features/copilot-cli": {},
@@ -22,7 +26,10 @@
         "bitlang.cobol",
         "ms-vscode.cpptools"
       ],
-      "settings": {}
+      "settings": {
+        // Enable Copilot Chat code generation to use instruction files
+        "github.copilot.chat.codeGeneration.useInstructionFiles": true
+      }
     }
   }
 }
