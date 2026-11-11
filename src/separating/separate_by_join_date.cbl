@@ -52,6 +52,7 @@
            ACCEPT WS-ARG-COUNT FROM ARGUMENT-NUMBER
            IF WS-ARG-COUNT < 4
                PERFORM DISPLAY-USAGE
+               MOVE 1 TO RETURN-CODE
                STOP RUN
            END-IF
 
@@ -61,8 +62,9 @@
            ACCEPT WS-SEPARATE-DATE     FROM ARGUMENT-VALUE
 
            IF WS-IN1-FILE-PATH = SPACES OR WS-OUT1-FILE-PATH = SPACES
-               OR WS-OUT1-FILE-PATH = SPACES OR WS-SEPARATE-DATE = 0
+               OR WS-OUT2-FILE-PATH = SPACES OR WS-SEPARATE-DATE = 0
                PERFORM DISPLAY-USAGE
+               MOVE 1 TO RETURN-CODE
                STOP RUN
            END-IF
 
@@ -71,6 +73,7 @@
                DISPLAY "ERROR: Invalid date. Please provide a date in YY
       -            "YYMMDD format."
                PERFORM DISPLAY-USAGE
+               MOVE 1 TO RETURN-CODE
                STOP RUN
            END-IF
 

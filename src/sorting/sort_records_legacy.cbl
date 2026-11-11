@@ -102,6 +102,7 @@
            ACCEPT WS-ARG-COUNT FROM ARGUMENT-NUMBER
            IF WS-ARG-COUNT < 2
                PERFORM DISPLAY-USAGE
+               MOVE 1 TO RETURN-CODE
                STOP RUN
            END-IF
 
@@ -110,6 +111,7 @@
 
            IF WS-IN1-FILE-PATH = SPACES OR WS-OUT1-FILE-PATH = SPACES
                PERFORM DISPLAY-USAGE
+               MOVE 1 TO RETURN-CODE
                STOP RUN
            END-IF
 
@@ -119,15 +121,16 @@
 
            PERFORM BUILD-WORK-FILE-PATH
 
-           if WS-ARG-COUNT >= 4
+           IF WS-ARG-COUNT >= 4
                ACCEPT WS-ARG-KEY-START FROM ARGUMENT-VALUE
                ACCEPT WS-ARG-KEY-LEN   FROM ARGUMENT-VALUE
 
-               if WS-ARG-KEY-START < 1 OR
+               IF WS-ARG-KEY-START < 1 OR
                   WS-ARG-KEY-LEN < 1 OR
                   WS-ARG-KEY-START + WS-ARG-KEY-LEN - 1 > 100
                    DISPLAY "ERROR: Invalid key start or length."
                    PERFORM DISPLAY-USAGE
+                   MOVE 1 TO RETURN-CODE
                    STOP RUN
                END-IF
            END-IF

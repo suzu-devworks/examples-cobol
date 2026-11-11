@@ -20,6 +20,7 @@
 
            IF CURL-HANDLE = NULL
                DISPLAY "Initialization failed"
+               MOVE 1 TO RETURN-CODE
                STOP RUN
            END-IF
 
@@ -38,6 +39,7 @@
                *> Originally, the JSON returned to RESPONSE-BUF is entered here.
            ELSE
                DISPLAY "Error occurred, code: " API-RC
+               MOVE 1 TO RETURN-CODE
            END-IF
 
       * 4. Clean up

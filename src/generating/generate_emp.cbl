@@ -78,6 +78,7 @@ search
            ACCEPT WS-ARG-COUNT FROM ARGUMENT-NUMBER
            IF WS-ARG-COUNT < 1
                PERFORM DISPLAY-USAGE
+               MOVE 1 TO RETURN-CODE
                STOP RUN
            END-IF
 
@@ -87,6 +88,7 @@ search
 
            IF WS-OUT1-FILE-PATH = SPACES
                PERFORM DISPLAY-USAGE
+               MOVE 1 TO RETURN-CODE
                STOP RUN
            END-IF
 
@@ -96,6 +98,7 @@ search
 
            IF WS-MAX-RECORDS < 1
                PERFORM DISPLAY-USAGE
+               MOVE 1 TO RETURN-CODE
                STOP RUN
            END-IF
 
@@ -105,6 +108,7 @@ search
 
            IF WS-MODE NOT = "rand" AND WS-MODE NOT = "sorted"
                PERFORM DISPLAY-USAGE
+               MOVE 1 TO RETURN-CODE
                STOP RUN
            END-IF
 

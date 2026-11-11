@@ -61,6 +61,7 @@
            ACCEPT WS-ARG-COUNT FROM ARGUMENT-NUMBER
            IF WS-ARG-COUNT < 3
                PERFORM DISPLAY-USAGE
+               MOVE 1 TO RETURN-CODE
                STOP RUN
            END-IF
 
@@ -71,6 +72,7 @@
            IF WS-IN1-FILE-PATH = SPACES OR WS-IN2-FILE-PATH = SPACES OR
               WS-OUT1-FILE-PATH = SPACES
                PERFORM DISPLAY-USAGE
+               MOVE 1 TO RETURN-CODE
                STOP RUN
            END-IF
 
@@ -83,7 +85,7 @@
            OPEN OUTPUT OUT1-FILE.
 
        DISPLAY-USAGE.
-           STRING "match_emp_one_to_one [INPUT1_FILE] [INPUT2_FILE]"
+           STRING "match_emp_one_to_many [INPUT1_FILE] [INPUT2_FILE]"
                " [OUTPUT_FILE]"
                INTO WS-USAGE-STR.
            DISPLAY "Usage: " WS-USAGE-STR.
