@@ -1,5 +1,5 @@
       * --------------------------------------
-      * The structure of an employee record. ( length = 36 )
+      * The structure of an employee record. ( length = 42 )
       * --------------------------------------
        03  EMP-REC.
            05  EMP-ID                    PIC 9(004).

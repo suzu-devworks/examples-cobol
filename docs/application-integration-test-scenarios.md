@@ -176,6 +176,28 @@ read the previous month's summaries. SQLite and the ISAM file are not shared:
 ISAM serves the salary calculation, and SQLite serves the department summary
 history.
 
+## Copybooks
+
+Keep the existing employee and department summary layouts stable for the
+examples that already use them. Use separate copybooks where the integration
+flow has a different record purpose or layout:
+
+| Copybook | Status | Record length | Flow usage |
+| --- | --- | ---: | --- |
+| `src/copies/emp_rec.cpy` | Existing, reusable; length comment corrected | 42 bytes | Employee roster and the employee portion of reports and joins. |
+| `src/copies/dept_rec.cpy` | Existing, reusable | 32 bytes | Department summary and the department portion of the one-to-many join. |
+| `src/copies/quick_sort.cpy` | Existing, not used by this flow | — | Retained for the existing quick-sort implementation. |
+| `src/copies/dept_master_rec.cpy` | New | 14 bytes | Department input records containing department ID and name. |
+| `src/copies/salary_rec.cpy` | New | 16 bytes | Previous-month salary input and salary lookup data: employee ID, month, and monthly salary. |
+| `src/copies/attendance_rec.cpy` | New | 9 bytes | Generated attendance: employee ID, overtime hours, and absence days. |
+| `src/copies/emp_salary_rec.cpy` | New | 48 bytes | ISAM employee record: the existing 42-byte `EMP-REC` plus its salary month. |
+
+No existing field layout needs to change for this flow. In particular,
+`dept_rec.cpy` is the summary layout with manager and member-count fields; it
+is not the smaller department master input layout. `emp_salary_rec.cpy`
+includes `emp_rec.cpy` so the employee fields remain consistent. Keep
+example-specific padding outside these shared layouts.
+
 ## Fixed Inputs and Salary Generator
 
 Keep these three inputs as small, checked-in fixtures. Each has its own reader
@@ -193,17 +215,18 @@ stamps every row with the month before `--run-month` (for example
 including the January-to-December year boundary, and lets the previous run's
 output be fed back in unchanged. It writes a fixed-length intermediate record:
 employee ID `9(004)`, salary month `9(006)` (`YYYYMM`), and monthly salary
-`9(006)`, defined in a new copybook under `src/copies`. The load step
-builds the ISAM salary master from this file.
+`9(006)`, defined in `src/copies/salary_rec.cpy`. The load step builds the
+ISAM salary master from this file.
 
 Add one focused attendance generator that writes only the fixed-length
 `work/attendance.dat`. It reads employee IDs from `emp.dat` and takes the run
 month and a seed, so overtime hours and absence days vary per employee and per
-month yet are reproducible for the same arguments. A suggested record is
-employee ID `9(004)`, overtime hours `9(003)`, and absence days `9(002)`.
-The generator does not read salaries, decide the calculation rule, create
-other files, or write expected results. Tests that need exact values pass a
-fixed seed, or use a small fixed table for a few employees.
+month yet are reproducible for the same arguments. Each record contains
+employee ID `9(004)`, overtime hours `9(003)`, and absence days `9(002)`, as
+defined in `src/copies/attendance_rec.cpy`. The generator does not read
+salaries, decide the calculation rule, create other files, or write expected
+results. Tests that need exact values pass a fixed seed, or use a small fixed
+table for a few employees.
 
 The calculation rule belongs to the salary program. For example: current
 salary = previous salary + overtime hours x hourly rate - absence days x daily
@@ -224,7 +247,7 @@ every department as new.
 Use `generate_emp.cbl` only when testing throughput or large-file behavior;
 do not use its random records to assert exact join or aggregate results.
 
-The employee record is 36 bytes before any example-specific padding. Its
+The employee record is 42 bytes before any example-specific padding. Its
 employee ID starts at position 1 and its department ID starts at position 15.
 The department record is 32 bytes before padding, with department ID at
 position 1. Keep sort key positions and lengths aligned with the record layout
