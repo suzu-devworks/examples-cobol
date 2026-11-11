@@ -164,7 +164,7 @@ program does one thing. New programs live in new category folders under `src/`.
 | `match_emp_one_to_many` | `src/matching/` | Existing | Join department summaries to the employees belonging to each department. |
 | `separate_by_dept_multi` | `src/separating/` | Existing | Write one employee file per department. |
 | `separate_by_join_date` | `src/separating/` | Existing | Split employees into two files at a configured join date. |
-| `transform_emp_to_csv` | `src/transforming/` | Existing, rename of `transform_to_csv` | Convert employee records into a display-oriented CSV report. |
+| `transform_emp_to_csv` | `src/transforming/` | Existing | Convert employee records into a display-oriented CSV report. |
 | `transform_to_salary_csv` | `src/transforming/` | Additional | Write `output/salary.csv` in the canonical schema. |
 | `read_dept_summary_db` | `src/database/` | Additional | Read the previous month's department summaries from SQLite. |
 | `compare_dept_summary` | `src/matching/` | Additional | Compare previous and current department summaries. |
