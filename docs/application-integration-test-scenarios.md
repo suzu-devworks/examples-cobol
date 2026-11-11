@@ -144,13 +144,12 @@ flowchart TD
 
 ## Programs
 
-Names follow the existing `verb_object` convention. `transforming` holds both
-input (`transform_from_*`) and output (`transform_to_*`) conversions. Each
+Names follow the existing `verb_object` convention. Each
 program does one thing. New programs live in new category folders under `src/`.
 
 | Program | Folder | Status | Role |
 | --- | --- | --- | --- |
-| `run_integration_scenario.sh` | `src/integration/` | Additional | Shell job controller (JCL-style). |
+| `run_integration_scenario.sh` | `scripts/integration/` | Additional | Shell job controller (JCL-style). |
 | `transform_from_emp_json` | `src/transforming/` | Additional | Convert `input/emp.json` to `emp.dat`. |
 | `transform_from_dept_xml` | `src/transforming/` | Additional | Convert `input/dept.xml` to `dept.dat`. |
 | `transform_from_salary_csv` | `src/transforming/` | Additional | Convert `input/salary.csv` to `previous_salary.dat`, ignoring its dates and stamping the previous month. |
