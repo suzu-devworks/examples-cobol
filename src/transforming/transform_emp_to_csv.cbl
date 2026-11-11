@@ -1,5 +1,5 @@
        IDENTIFICATION DIVISION.
-       PROGRAM-ID. transform_to_csv.
+       PROGRAM-ID. transform_emp_to_csv.
 
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
@@ -79,7 +79,7 @@
            OPEN OUTPUT OUT1-FILE.
 
        DISPLAY-USAGE.
-           STRING "transform_to_csv [INPUT_FILE] [OUTPUT_FILE_]"
+           STRING "transform_emp_to_csv [INPUT_FILE] [OUTPUT_FILE_]"
                INTO WS-USAGE-STR.
            DISPLAY "Usage: " WS-USAGE-STR.
 
