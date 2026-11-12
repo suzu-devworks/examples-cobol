@@ -5,13 +5,16 @@
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
            SELECT IN1-FILE     ASSIGN TO WS-IN1-FILE-PATH
-                               ORGANIZATION IS LINE SEQUENTIAL.
+                               ORGANIZATION IS LINE SEQUENTIAL
+                               FILE STATUS IS WS-IN1-FILE-STATUS.
            SELECT OUT1-FILE    ASSIGN TO WS-OUT1-FILE-PATH
-                               ORGANIZATION IS LINE SEQUENTIAL.
+                               ORGANIZATION IS LINE SEQUENTIAL
+                               FILE STATUS IS WS-OUT1-FILE-STATUS.
 
            *> work file for sorting
            SELECT WORK-FILE    ASSIGN TO WS-WORK-FILE-PATH
-                               ORGANIZATION IS LINE SEQUENTIAL.
+                               ORGANIZATION IS LINE SEQUENTIAL
+                               FILE STATUS IS WS-WORK-FILE-STATUS.
 
        DATA DIVISION.
        FILE SECTION.
@@ -39,6 +42,17 @@
        01  WS-COUNTERS.
            05  WS-IN1-COUNT        PIC 9(006) VALUE 0.
            05  WS-OUT1-COUNT       PIC 9(006) VALUE 0.
+
+       01  WS-FILE-STATUSES.
+       COPY file_statuses
+           REPLACING ==:PREFIX:== BY ==WS-IN1==.
+       COPY file_statuses
+           REPLACING ==:PREFIX:== BY ==WS-OUT1==.
+       COPY file_statuses
+           REPLACING ==:PREFIX:== BY ==WS-WORK==.
+
+       01  WS-IO-ERROR.
+       COPY file_io_error.
 
        01  WS-VARS.
            05  WS-USAGE-STR        PIC X(100).
@@ -92,8 +106,8 @@
 
            DISPLAY "SORT KEY:     " WS-ARG-KEY-START ":" WS-ARG-KEY-LEN
 
-           OPEN INPUT IN1-FILE
-           OPEN OUTPUT OUT1-FILE.
+           PERFORM OPEN-IN1-FILE
+           PERFORM OPEN-OUT1-FILE.
 
        DISPLAY-USAGE.
            STRING
@@ -113,15 +127,14 @@
 
       * --- Terminate process
        TERMINATE-PROCESS.
-           CLOSE IN1-FILE
-           CLOSE OUT1-FILE
+           PERFORM CLOSE-IN1-FILE
+           PERFORM CLOSE-OUT1-FILE
            DISPLAY "SUCCESS: Sort completed."
            DISPLAY "------------------------------"
            DISPLAY "INPUT1  READ  COUNT: " WS-IN1-COUNT
            DISPLAY "OUTPUT1 WRITE COUNT: " WS-OUT1-COUNT
            DISPLAY "------------------------------".
 
-      * --- Main processing
        MAIN-PROCESS.
            *> Sort the records based on the specified key
            SORT WORK-FILE ON
@@ -133,10 +146,9 @@
        READ-AND-EXTRACT-KEY.
            MOVE "N" TO EOF-FLG
            PERFORM UNTIL EOF-FLG = "Y"
-               READ IN1-FILE
-                   AT END
-                       MOVE "Y" TO EOF-FLG
-                   NOT AT END
+               PERFORM READ-IN1-FILE
+               EVALUATE TRUE
+                   WHEN WS-IN1-FILE-OK
                        ADD 1 TO WS-IN1-COUNT
 
                        *> Clear work record
@@ -150,7 +162,19 @@
 
                        *> Pass records to sort processing
                        RELEASE WORK-REC
-               END-READ
+                       IF NOT WS-WORK-FILE-OK
+                           MOVE "WORK-FILE" TO WS-IO-ERROR-FILE
+                           MOVE WS-WORK-FILE-STATUS
+                             TO WS-IO-ERROR-CODE
+                           PERFORM FILE-IO-ERROR
+                       END-IF
+                   WHEN WS-IN1-FILE-EOF
+                       MOVE "Y" TO EOF-FLG
+                   WHEN OTHER
+                       MOVE "IN1-FILE" TO WS-IO-ERROR-FILE
+                       MOVE WS-IN1-FILE-STATUS TO WS-IO-ERROR-CODE
+                       PERFORM FILE-IO-ERROR
+               END-EVALUATE
            END-PERFORM.
 
        WRITE-CLEAN-DATA.
@@ -158,12 +182,66 @@
            PERFORM UNTIL EOF-WORK-FLG = "Y"
                *> Retrieve sorted records one by one
                RETURN WORK-FILE
-                   AT END
-                       MOVE "Y" TO EOF-WORK-FLG
-                   NOT AT END
+                   AT END CONTINUE
+               END-RETURN
+               EVALUATE TRUE
+                   WHEN WS-WORK-FILE-OK
                        ADD 1 TO WS-OUT1-COUNT
                        *> write the original record to output file
                        MOVE WORK-REC-ORIGINAL TO OUT1-REC
-                       WRITE OUT1-REC
-               END-RETURN
+                       PERFORM WRITE-OUT1-FILE
+                   WHEN WS-WORK-FILE-EOF
+                       MOVE "Y" TO EOF-WORK-FLG
+                   WHEN OTHER
+                       MOVE "WORK-FILE" TO WS-IO-ERROR-FILE
+                       MOVE WS-WORK-FILE-STATUS
+                         TO WS-IO-ERROR-CODE
+                       PERFORM FILE-IO-ERROR
+               END-EVALUATE
            END-PERFORM.
+
+       OPEN-IN1-FILE.
+           OPEN INPUT IN1-FILE
+           IF NOT WS-IN1-FILE-OK
+               MOVE "IN1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-IN1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
+       CLOSE-IN1-FILE.
+           CLOSE IN1-FILE
+           IF NOT WS-IN1-FILE-OK
+               MOVE "IN1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-IN1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
+       READ-IN1-FILE.
+           READ IN1-FILE
+           END-READ.
+
+       OPEN-OUT1-FILE.
+           OPEN OUTPUT OUT1-FILE
+           IF NOT WS-OUT1-FILE-OK
+               MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
+       CLOSE-OUT1-FILE.
+           CLOSE OUT1-FILE
+           IF NOT WS-OUT1-FILE-OK
+               MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
+       WRITE-OUT1-FILE.
+           WRITE OUT1-REC
+           IF NOT WS-OUT1-FILE-OK
+               MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
+       COPY file_io_error_proc.

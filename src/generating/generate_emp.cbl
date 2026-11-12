@@ -5,7 +5,8 @@
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
            SELECT OUT1-FILE    ASSIGN TO WS-OUT1-FILE-PATH
-                               ORGANIZATION IS LINE SEQUENTIAL.
+                               ORGANIZATION IS LINE SEQUENTIAL
+                               FILE STATUS IS WS-OUT1-FILE-STATUS.
 
        DATA DIVISION.
        FILE SECTION.
@@ -25,6 +26,13 @@
        01  WS-COUNTERS.
            05  WS-OUT1-COUNT       PIC 9(006) VALUE 0.
            05  WS-I                PIC 9(006) VALUE 0.
+
+       01  WS-FILE-STATUSES.
+       COPY file_statuses
+           REPLACING ==:PREFIX:== BY ==WS-OUT1==.
+
+       01  WS-IO-ERROR.
+       COPY file_io_error.
 
       *--- RECORD definition
        01  WS-OUT1-REC.
@@ -73,7 +81,6 @@ search
            PERFORM TERMINATE-PROCESS
            STOP RUN.
 
-      * --- Initialize process
        INITIALIZE-PROCESS.
            ACCEPT WS-ARG-COUNT FROM ARGUMENT-NUMBER
            IF WS-ARG-COUNT < 1
@@ -121,22 +128,20 @@ search
            DISPLAY "MODE:         " FUNCTION TRIM(WS-MODE)
            DISPLAY "COUNT:        " WS-MAX-RECORDS
 
-           OPEN OUTPUT OUT1-FILE.
+           PERFORM OPEN-OUT1-FILE.
 
        DISPLAY-USAGE.
            DISPLAY "Usage: generate_emp [FILENAME] [COUNT] [MODE]"
            DISPLAY "       COUNT:  1 - 999999 (default: 50)"
            DISPLAY "       MODE:   'rand' or 'sorted'".
 
-      * --- Terminate process
        TERMINATE-PROCESS.
-           CLOSE OUT1-FILE.
+           PERFORM CLOSE-OUT1-FILE
            DISPLAY "SUCCESS: Generator completed."
            DISPLAY "------------------------------"
            DISPLAY "OUTPUT1 WRITE COUNT: " WS-OUT1-COUNT
            DISPLAY "------------------------------".
 
-      * --- Main processing
        MAIN-PROCESS.
            COMPUTE WS-RAND-NUM = FUNCTION RANDOM(WS-RANDOM-SEED)
 
@@ -179,6 +184,29 @@ search
            COMPUTE EMP-SALARY
                    = 200000 + (WS-RAND-NUM * 400000).
 
+       OPEN-OUT1-FILE.
+           OPEN OUTPUT OUT1-FILE
+           IF NOT WS-OUT1-FILE-OK
+               MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
+       CLOSE-OUT1-FILE.
+           CLOSE OUT1-FILE
+           IF NOT WS-OUT1-FILE-OK
+               MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
        WRITE-OUT1-RECORD.
            WRITE OUT1-REC FROM WS-OUT1-REC
+           IF NOT WS-OUT1-FILE-OK
+               MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF
            ADD 1 TO WS-OUT1-COUNT.
+
+       COPY file_io_error_proc.

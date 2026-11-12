@@ -5,19 +5,25 @@
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
            SELECT IN1-FILE     ASSIGN TO WS-IN1-FILE-PATH
-                               ORGANIZATION IS LINE SEQUENTIAL.
+                               ORGANIZATION IS LINE SEQUENTIAL
+                               FILE STATUS IS WS-IN1-FILE-STATUS.
            SELECT OUT1-FILE    ASSIGN TO WS-OUT1-FILE-PATH
-                               ORGANIZATION IS LINE SEQUENTIAL.
+                               ORGANIZATION IS LINE SEQUENTIAL
+                               FILE STATUS IS WS-OUT1-FILE-STATUS.
 
            *> work file for sorting
            SELECT WORK1-FILE   ASSIGN TO WS-WORK1-PATH
-                               ORGANIZATION IS LINE SEQUENTIAL.
+                               ORGANIZATION IS LINE SEQUENTIAL
+                               FILE STATUS IS WS-WORK1-FILE-STATUS.
            SELECT WORK2-FILE   ASSIGN TO WS-WORK2-PATH
-                               ORGANIZATION IS LINE SEQUENTIAL.
+                               ORGANIZATION IS LINE SEQUENTIAL
+                               FILE STATUS IS WS-WORK2-FILE-STATUS.
            SELECT WORK3-FILE   ASSIGN TO WS-WORK3-PATH
-                               ORGANIZATION IS LINE SEQUENTIAL.
+                               ORGANIZATION IS LINE SEQUENTIAL
+                               FILE STATUS IS WS-WORK3-FILE-STATUS.
            SELECT WORK4-FILE   ASSIGN TO WS-WORK4-PATH
-                               ORGANIZATION IS LINE SEQUENTIAL.
+                               ORGANIZATION IS LINE SEQUENTIAL
+                               FILE STATUS IS WS-WORK4-FILE-STATUS.
 
        DATA DIVISION.
        FILE SECTION.
@@ -58,12 +64,29 @@
            05  WS-OUT1-COUNT           PIC 9(006) VALUE 0.
            05  WS-I                    PIC 9(005) COMP-5 VALUE 0.
 
+       01  WS-FILE-STATUSES.
+       COPY file_statuses
+           REPLACING ==:PREFIX:== BY ==WS-IN1==.
+       COPY file_statuses
+           REPLACING ==:PREFIX:== BY ==WS-OUT1==.
+       COPY file_statuses
+           REPLACING ==:PREFIX:== BY ==WS-WORK1==.
+       COPY file_statuses
+           REPLACING ==:PREFIX:== BY ==WS-WORK2==.
+       COPY file_statuses
+           REPLACING ==:PREFIX:== BY ==WS-WORK3==.
+       COPY file_statuses
+           REPLACING ==:PREFIX:== BY ==WS-WORK4==.
+
+       01  WS-IO-ERROR.
+       COPY file_io_error.
+
        01  WS-VARS.
            05  WS-USAGE-STR            PIC X(100).
            05  WS-PID                  PIC 9(008).
 
       * --- For quick sort ---
-       COPY "quick_sort.cpy" REPLACING ==:PREFIX:== BY ==WS==.
+       COPY quick_sort REPLACING ==:PREFIX:== BY ==WS==.
        01  WS-REC-MAX                  PIC 9(005) VALUE 100.
 
       * --- For division phase ---
@@ -137,8 +160,8 @@
 
            DISPLAY "SORT KEY:     " WS-ARG-KEY-START ":" WS-ARG-KEY-LEN
 
-           OPEN INPUT IN1-FILE
-           OPEN OUTPUT OUT1-FILE.
+           PERFORM OPEN-IN1-FILE
+           PERFORM OPEN-OUT1-FILE.
 
        DISPLAY-USAGE.
            STRING
@@ -163,19 +186,16 @@
            DISPLAY "WORK3 FILE: " FUNCTION TRIM(WS-WORK3-PATH)
            DISPLAY "WORK4 FILE: " FUNCTION TRIM(WS-WORK4-PATH).
 
-      * --- Terminate process
        TERMINATE-PROCESS.
            DELETE FILE WORK1-FILE WORK2-FILE WORK3-FILE WORK4-FILE
-
-           CLOSE IN1-FILE
-           CLOSE OUT1-FILE
+           PERFORM CLOSE-IN1-FILE
+           PERFORM CLOSE-OUT1-FILE
            DISPLAY "SUCCESS: Sort completed."
            DISPLAY "------------------------------"
            DISPLAY "INPUT1  READ  COUNT: " WS-IN1-COUNT
            DISPLAY "OUTPUT1 WRITE COUNT: " WS-OUT1-COUNT
            DISPLAY "------------------------------".
 
-      * --- Main processing
        MAIN-PROCESS.
            PERFORM INITIAL-DIVISION-PHASE
 
@@ -185,7 +205,8 @@
 
       * ---------------------------------------------
        INITIAL-DIVISION-PHASE.
-           OPEN OUTPUT WORK1-FILE WORK2-FILE
+           PERFORM OPEN-WORK1-OUTPUT
+           PERFORM OPEN-WORK2-OUTPUT
 
            MOVE "N" TO IN1-EOF
            MOVE 1   TO WS-DIV-TOGGLE
@@ -196,13 +217,20 @@
                *> [Safety guard] Read so as not to exceed the maximum number of arrays
                PERFORM UNTIL WS-REC-CNT = WS-REC-MAX OR IN1-EOF = "Y"
                    READ IN1-FILE
-                       AT END
-                           MOVE "Y" TO IN1-EOF
-                       NOT AT END
+                   END-READ
+                   EVALUATE TRUE
+                       WHEN WS-IN1-FILE-OK
                            ADD 1 TO WS-IN1-COUNT
                            ADD 1 TO WS-REC-CNT
                            MOVE IN1-REC TO WS-REC(WS-REC-CNT)
-                   END-READ
+                       WHEN WS-IN1-FILE-EOF
+                           MOVE "Y" TO IN1-EOF
+                       WHEN OTHER
+                           MOVE "IN1-FILE" TO WS-IO-ERROR-FILE
+                           MOVE WS-IN1-FILE-STATUS
+                             TO WS-IO-ERROR-CODE
+                           PERFORM FILE-IO-ERROR
+                   END-EVALUATE
                END-PERFORM
 
                IF WS-REC-CNT > 0
@@ -219,7 +247,8 @@
                END-IF
            END-PERFORM
 
-           CLOSE WORK1-FILE WORK2-FILE.
+           PERFORM CLOSE-WORK1-FILE
+           PERFORM CLOSE-WORK2-FILE.
 
        QUICK-SORT-START.
            MOVE WS-ARG-KEY-START TO WS-KEY-START
@@ -233,11 +262,13 @@
            IF WS-DIV-TOGGLE = 1
                PERFORM UNTIL WS-I > WS-REC-CNT
                    WRITE W1-REC FROM WS-REC(WS-I)
+                   PERFORM CHECK-WORK1-FILE
                    ADD 1 TO WS-I
                END-PERFORM
            ELSE
                PERFORM UNTIL WS-I > WS-REC-CNT
                    WRITE W2-REC FROM WS-REC(WS-I)
+                   PERFORM CHECK-WORK2-FILE
                    ADD 1 TO WS-I
                END-PERFORM
            END-IF.
@@ -262,8 +293,10 @@
            END-PERFORM.
 
        MERGE-PASS-1-TO-2.
-           OPEN INPUT WORK1-FILE WORK2-FILE
-           OPEN OUTPUT WORK3-FILE WORK4-FILE
+           PERFORM OPEN-WORK1-INPUT
+           PERFORM OPEN-WORK2-INPUT
+           PERFORM OPEN-WORK3-OUTPUT
+           PERFORM OPEN-WORK4-OUTPUT
 
            MOVE "N" TO W1-EOF W2-EOF
            MOVE LOW-VALUES TO W1-PREV-KEY W2-PREV-KEY
@@ -284,8 +317,10 @@
                END-IF
            END-PERFORM
 
-           CLOSE WORK1-FILE WORK2-FILE
-           CLOSE WORK3-FILE WORK4-FILE.
+           PERFORM CLOSE-WORK1-FILE
+           PERFORM CLOSE-WORK2-FILE
+           PERFORM CLOSE-WORK3-FILE
+           PERFORM CLOSE-WORK4-FILE.
 
        MERGE-SINGLE-RUN-12.
            PERFORM UNTIL (W1-EOF = "Y" OR W1-CUR-KEY < W1-PREV-KEY) AND
@@ -315,8 +350,10 @@
            MOVE LOW-VALUES TO W1-PREV-KEY W2-PREV-KEY.
 
        MERGE-PASS-2-TO-1.
-           OPEN INPUT WORK3-FILE WORK4-FILE
-           OPEN OUTPUT WORK1-FILE WORK2-FILE
+           PERFORM OPEN-WORK3-INPUT
+           PERFORM OPEN-WORK4-INPUT
+           PERFORM OPEN-WORK1-OUTPUT
+           PERFORM OPEN-WORK2-OUTPUT
 
            MOVE "N" TO W3-EOF W4-EOF
            MOVE LOW-VALUES TO W3-PREV-KEY W4-PREV-KEY
@@ -337,8 +374,10 @@
                END-IF
            END-PERFORM
 
-           CLOSE WORK3-FILE WORK4-FILE.
-           CLOSE WORK1-FILE WORK2-FILE.
+           PERFORM CLOSE-WORK3-FILE
+           PERFORM CLOSE-WORK4-FILE
+           PERFORM CLOSE-WORK1-FILE
+           PERFORM CLOSE-WORK2-FILE.
 
        MERGE-SINGLE-RUN-34.
            PERFORM UNTIL (W3-EOF = "Y" OR W3-CUR-KEY < W3-PREV-KEY) AND
@@ -370,69 +409,109 @@
        READ-WORK1.
            MOVE W1-CUR-KEY TO W1-PREV-KEY
            READ WORK1-FILE
-               AT END MOVE "Y" TO W1-EOF
-                      MOVE HIGH-VALUES TO W1-CUR-KEY
-               NOT AT END MOVE SPACE TO W1-CUR-KEY
-                          MOVE W1-REC(WS-KEY-START:WS-KEY-LEN)
-                            TO W1-CUR-KEY(1:WS-KEY-LEN)
-           END-READ.
+           END-READ
+           EVALUATE TRUE
+               WHEN WS-WORK1-FILE-OK
+                   MOVE SPACE TO W1-CUR-KEY
+                   MOVE W1-REC(WS-KEY-START:WS-KEY-LEN)
+                     TO W1-CUR-KEY(1:WS-KEY-LEN)
+               WHEN WS-WORK1-FILE-EOF
+                   MOVE "Y" TO W1-EOF
+                   MOVE HIGH-VALUES TO W1-CUR-KEY
+               WHEN OTHER
+                   MOVE "WORK1-FILE" TO WS-IO-ERROR-FILE
+                   MOVE WS-WORK1-FILE-STATUS TO WS-IO-ERROR-CODE
+                   PERFORM FILE-IO-ERROR
+           END-EVALUATE.
 
        READ-WORK2.
            MOVE W2-CUR-KEY TO W2-PREV-KEY
            READ WORK2-FILE
-               AT END MOVE "Y" TO W2-EOF
-                      MOVE HIGH-VALUES TO W2-CUR-KEY
-               NOT AT END MOVE SPACE TO W2-CUR-KEY
-                          MOVE W2-REC(WS-KEY-START:WS-KEY-LEN)
-                            TO W2-CUR-KEY(1:WS-KEY-LEN)
-           END-READ.
+           END-READ
+           EVALUATE TRUE
+               WHEN WS-WORK2-FILE-OK
+                   MOVE SPACE TO W2-CUR-KEY
+                   MOVE W2-REC(WS-KEY-START:WS-KEY-LEN)
+                     TO W2-CUR-KEY(1:WS-KEY-LEN)
+               WHEN WS-WORK2-FILE-EOF
+                   MOVE "Y" TO W2-EOF
+                   MOVE HIGH-VALUES TO W2-CUR-KEY
+               WHEN OTHER
+                   MOVE "WORK2-FILE" TO WS-IO-ERROR-FILE
+                   MOVE WS-WORK2-FILE-STATUS TO WS-IO-ERROR-CODE
+                   PERFORM FILE-IO-ERROR
+           END-EVALUATE.
 
        READ-WORK3.
            MOVE W3-CUR-KEY TO W3-PREV-KEY
            READ WORK3-FILE
-               AT END MOVE "Y" TO W3-EOF
-                      MOVE HIGH-VALUES TO W3-CUR-KEY
-               NOT AT END MOVE SPACE TO W3-CUR-KEY
-                          MOVE W3-REC(WS-KEY-START:WS-KEY-LEN)
-                            TO W3-CUR-KEY(1:WS-KEY-LEN)
-           END-READ.
+           END-READ
+           EVALUATE TRUE
+               WHEN WS-WORK3-FILE-OK
+                   MOVE SPACE TO W3-CUR-KEY
+                   MOVE W3-REC(WS-KEY-START:WS-KEY-LEN)
+                     TO W3-CUR-KEY(1:WS-KEY-LEN)
+               WHEN WS-WORK3-FILE-EOF
+                   MOVE "Y" TO W3-EOF
+                   MOVE HIGH-VALUES TO W3-CUR-KEY
+               WHEN OTHER
+                   MOVE "WORK3-FILE" TO WS-IO-ERROR-FILE
+                   MOVE WS-WORK3-FILE-STATUS TO WS-IO-ERROR-CODE
+                   PERFORM FILE-IO-ERROR
+           END-EVALUATE.
 
        READ-WORK4.
            MOVE W4-CUR-KEY TO W4-PREV-KEY
            READ WORK4-FILE
-               AT END MOVE "Y" TO W4-EOF
-                      MOVE HIGH-VALUES TO W4-CUR-KEY
-               NOT AT END MOVE SPACE TO W4-CUR-KEY
-                          MOVE W4-REC(WS-KEY-START:WS-KEY-LEN)
-                            TO W4-CUR-KEY(1:WS-KEY-LEN)
-           END-READ.
+           END-READ
+           EVALUATE TRUE
+               WHEN WS-WORK4-FILE-OK
+                   MOVE SPACE TO W4-CUR-KEY
+                   MOVE W4-REC(WS-KEY-START:WS-KEY-LEN)
+                     TO W4-CUR-KEY(1:WS-KEY-LEN)
+               WHEN WS-WORK4-FILE-EOF
+                   MOVE "Y" TO W4-EOF
+                   MOVE HIGH-VALUES TO W4-CUR-KEY
+               WHEN OTHER
+                   MOVE "WORK4-FILE" TO WS-IO-ERROR-FILE
+                   MOVE WS-WORK4-FILE-STATUS TO WS-IO-ERROR-CODE
+                   PERFORM FILE-IO-ERROR
+           END-EVALUATE.
 
        WRITE-OUT-W34-FROM-W1.
            IF WS-WRITE-TOGGLE = 3
                WRITE W3-REC FROM W1-REC
+               PERFORM CHECK-WORK3-FILE
            ELSE
                WRITE W4-REC FROM W1-REC
+               PERFORM CHECK-WORK4-FILE
            END-IF.
 
        WRITE-OUT-W34-FROM-W2.
            IF WS-WRITE-TOGGLE = 3
                WRITE W3-REC FROM W2-REC
+               PERFORM CHECK-WORK3-FILE
            ELSE
                WRITE W4-REC FROM W2-REC
+               PERFORM CHECK-WORK4-FILE
            END-IF.
 
        WRITE-OUT-W12-FROM-W3.
            IF WS-WRITE-TOGGLE = 1
                WRITE W1-REC FROM W3-REC
+               PERFORM CHECK-WORK1-FILE
            ELSE
                WRITE W2-REC FROM W3-REC
+               PERFORM CHECK-WORK2-FILE
            END-IF.
 
        WRITE-OUT-W12-FROM-W4.
            IF WS-WRITE-TOGGLE = 1
                WRITE W1-REC FROM W4-REC
+               PERFORM CHECK-WORK1-FILE
            ELSE
                WRITE W2-REC FROM W4-REC
+               PERFORM CHECK-WORK2-FILE
            END-IF.
 
       * ---------------------------------------------
@@ -445,27 +524,151 @@
            END-IF.
 
        WRITE-OUTPUT-FROM-W1.
-           OPEN INPUT WORK1-FILE
+           PERFORM OPEN-WORK1-INPUT
            MOVE "N" TO W1-EOF
            PERFORM UNTIL W1-EOF = "Y"
                READ WORK1-FILE
-                   AT END MOVE "Y" TO W1-EOF
-                   NOT AT END
-                       WRITE OUT1-REC FROM W1-REC
-                       ADD 1 TO WS-OUT1-COUNT
                END-READ
+               EVALUATE TRUE
+                   WHEN WS-WORK1-FILE-OK
+                       WRITE OUT1-REC FROM W1-REC
+                       PERFORM CHECK-OUT1-FILE
+                       ADD 1 TO WS-OUT1-COUNT
+                   WHEN WS-WORK1-FILE-EOF
+                       MOVE "Y" TO W1-EOF
+                   WHEN OTHER
+                       MOVE "WORK1-FILE" TO WS-IO-ERROR-FILE
+                       MOVE WS-WORK1-FILE-STATUS TO WS-IO-ERROR-CODE
+                       PERFORM FILE-IO-ERROR
+               END-EVALUATE
            END-PERFORM
-           CLOSE WORK1-FILE.
+           PERFORM CLOSE-WORK1-FILE.
 
        WRITE-OUTPUT-FROM-W3.
-           OPEN INPUT WORK3-FILE
+           PERFORM OPEN-WORK3-INPUT
            MOVE "N" TO W3-EOF
            PERFORM UNTIL W3-EOF = "Y"
                READ WORK3-FILE
-                   AT END MOVE "Y" TO W3-EOF
-                   NOT AT END
-                       WRITE OUT1-REC FROM W3-REC
-                       ADD 1 TO WS-OUT1-COUNT
                END-READ
+               EVALUATE TRUE
+                   WHEN WS-WORK3-FILE-OK
+                       WRITE OUT1-REC FROM W3-REC
+                       PERFORM CHECK-OUT1-FILE
+                       ADD 1 TO WS-OUT1-COUNT
+                   WHEN WS-WORK3-FILE-EOF
+                       MOVE "Y" TO W3-EOF
+                   WHEN OTHER
+                       MOVE "WORK3-FILE" TO WS-IO-ERROR-FILE
+                       MOVE WS-WORK3-FILE-STATUS TO WS-IO-ERROR-CODE
+                       PERFORM FILE-IO-ERROR
+               END-EVALUATE
            END-PERFORM
-           CLOSE WORK3-FILE.
+           PERFORM CLOSE-WORK3-FILE.
+
+       CHECK-IN1-FILE.
+           IF NOT WS-IN1-FILE-OK
+               MOVE "IN1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-IN1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
+       CHECK-OUT1-FILE.
+           IF NOT WS-OUT1-FILE-OK
+               MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
+       CHECK-WORK1-FILE.
+           IF NOT WS-WORK1-FILE-OK
+               MOVE "WORK1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-WORK1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
+       CHECK-WORK2-FILE.
+           IF NOT WS-WORK2-FILE-OK
+               MOVE "WORK2-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-WORK2-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
+       CHECK-WORK3-FILE.
+           IF NOT WS-WORK3-FILE-OK
+               MOVE "WORK3-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-WORK3-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
+       CHECK-WORK4-FILE.
+           IF NOT WS-WORK4-FILE-OK
+               MOVE "WORK4-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-WORK4-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
+       OPEN-IN1-FILE.
+           OPEN INPUT IN1-FILE
+           PERFORM CHECK-IN1-FILE.
+
+       CLOSE-IN1-FILE.
+           CLOSE IN1-FILE
+           PERFORM CHECK-IN1-FILE.
+
+       OPEN-OUT1-FILE.
+           OPEN OUTPUT OUT1-FILE
+           PERFORM CHECK-OUT1-FILE.
+
+       CLOSE-OUT1-FILE.
+           CLOSE OUT1-FILE
+           PERFORM CHECK-OUT1-FILE.
+
+       OPEN-WORK1-INPUT.
+           OPEN INPUT WORK1-FILE
+           PERFORM CHECK-WORK1-FILE.
+
+       OPEN-WORK1-OUTPUT.
+           OPEN OUTPUT WORK1-FILE
+           PERFORM CHECK-WORK1-FILE.
+
+       CLOSE-WORK1-FILE.
+           CLOSE WORK1-FILE
+           PERFORM CHECK-WORK1-FILE.
+
+       OPEN-WORK2-INPUT.
+           OPEN INPUT WORK2-FILE
+           PERFORM CHECK-WORK2-FILE.
+
+       OPEN-WORK2-OUTPUT.
+           OPEN OUTPUT WORK2-FILE
+           PERFORM CHECK-WORK2-FILE.
+
+       CLOSE-WORK2-FILE.
+           CLOSE WORK2-FILE
+           PERFORM CHECK-WORK2-FILE.
+
+       OPEN-WORK3-INPUT.
+           OPEN INPUT WORK3-FILE
+           PERFORM CHECK-WORK3-FILE.
+
+       OPEN-WORK3-OUTPUT.
+           OPEN OUTPUT WORK3-FILE
+           PERFORM CHECK-WORK3-FILE.
+
+       CLOSE-WORK3-FILE.
+           CLOSE WORK3-FILE
+           PERFORM CHECK-WORK3-FILE.
+
+       OPEN-WORK4-INPUT.
+           OPEN INPUT WORK4-FILE
+           PERFORM CHECK-WORK4-FILE.
+
+       OPEN-WORK4-OUTPUT.
+           OPEN OUTPUT WORK4-FILE
+           PERFORM CHECK-WORK4-FILE.
+
+       CLOSE-WORK4-FILE.
+           CLOSE WORK4-FILE
+           PERFORM CHECK-WORK4-FILE.
+
+       COPY file_io_error_proc.
