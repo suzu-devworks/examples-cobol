@@ -20,6 +20,9 @@ This document defines the minimum coding rules for COBOL programs in this reposi
 Program names intentionally avoid hyphens because GnuCOBOL transpiles
 COBOL to C, and hyphens can cause issues in C-generated identifiers.
 
+- Avoid using the following terms as identifiers:
+  - `CHECK`: I’m not sure what will happen if I check it
+
 ## File Extensions
 
 - COBOL source files must use the `.cbl` extension.

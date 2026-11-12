@@ -262,13 +262,13 @@
            IF WS-DIV-TOGGLE = 1
                PERFORM UNTIL WS-I > WS-REC-CNT
                    WRITE W1-REC FROM WS-REC(WS-I)
-                   PERFORM CHECK-WORK1-FILE
+                   PERFORM VERIFY-WORK1-FILE
                    ADD 1 TO WS-I
                END-PERFORM
            ELSE
                PERFORM UNTIL WS-I > WS-REC-CNT
                    WRITE W2-REC FROM WS-REC(WS-I)
-                   PERFORM CHECK-WORK2-FILE
+                   PERFORM VERIFY-WORK2-FILE
                    ADD 1 TO WS-I
                END-PERFORM
            END-IF.
@@ -481,37 +481,37 @@
        WRITE-OUT-W34-FROM-W1.
            IF WS-WRITE-TOGGLE = 3
                WRITE W3-REC FROM W1-REC
-               PERFORM CHECK-WORK3-FILE
+               PERFORM VERIFY-WORK3-FILE
            ELSE
                WRITE W4-REC FROM W1-REC
-               PERFORM CHECK-WORK4-FILE
+               PERFORM VERIFY-WORK4-FILE
            END-IF.
 
        WRITE-OUT-W34-FROM-W2.
            IF WS-WRITE-TOGGLE = 3
                WRITE W3-REC FROM W2-REC
-               PERFORM CHECK-WORK3-FILE
+               PERFORM VERIFY-WORK3-FILE
            ELSE
                WRITE W4-REC FROM W2-REC
-               PERFORM CHECK-WORK4-FILE
+               PERFORM VERIFY-WORK4-FILE
            END-IF.
 
        WRITE-OUT-W12-FROM-W3.
            IF WS-WRITE-TOGGLE = 1
                WRITE W1-REC FROM W3-REC
-               PERFORM CHECK-WORK1-FILE
+               PERFORM VERIFY-WORK1-FILE
            ELSE
                WRITE W2-REC FROM W3-REC
-               PERFORM CHECK-WORK2-FILE
+               PERFORM VERIFY-WORK2-FILE
            END-IF.
 
        WRITE-OUT-W12-FROM-W4.
            IF WS-WRITE-TOGGLE = 1
                WRITE W1-REC FROM W4-REC
-               PERFORM CHECK-WORK1-FILE
+               PERFORM VERIFY-WORK1-FILE
            ELSE
                WRITE W2-REC FROM W4-REC
-               PERFORM CHECK-WORK2-FILE
+               PERFORM VERIFY-WORK2-FILE
            END-IF.
 
       * ---------------------------------------------
@@ -532,7 +532,7 @@
                EVALUATE TRUE
                    WHEN WS-WORK1-FILE-OK
                        WRITE OUT1-REC FROM W1-REC
-                       PERFORM CHECK-OUT1-FILE
+                       PERFORM VERIFY-OUT1-FILE
                        ADD 1 TO WS-OUT1-COUNT
                    WHEN WS-WORK1-FILE-EOF
                        MOVE "Y" TO W1-EOF
@@ -553,7 +553,7 @@
                EVALUATE TRUE
                    WHEN WS-WORK3-FILE-OK
                        WRITE OUT1-REC FROM W3-REC
-                       PERFORM CHECK-OUT1-FILE
+                       PERFORM VERIFY-OUT1-FILE
                        ADD 1 TO WS-OUT1-COUNT
                    WHEN WS-WORK3-FILE-EOF
                        MOVE "Y" TO W3-EOF
@@ -565,110 +565,110 @@
            END-PERFORM
            PERFORM CLOSE-WORK3-FILE.
 
-       CHECK-IN1-FILE.
+       OPEN-IN1-FILE.
+           OPEN INPUT IN1-FILE
+           PERFORM VERIFY-IN1-FILE.
+
+       CLOSE-IN1-FILE.
+           CLOSE IN1-FILE
+           PERFORM VERIFY-IN1-FILE.
+
+       VERIFY-IN1-FILE.
            IF NOT WS-IN1-FILE-OK
                MOVE "IN1-FILE" TO WS-IO-ERROR-FILE
                MOVE WS-IN1-FILE-STATUS TO WS-IO-ERROR-CODE
                PERFORM FILE-IO-ERROR
            END-IF.
 
-       CHECK-OUT1-FILE.
+       OPEN-OUT1-FILE.
+           OPEN OUTPUT OUT1-FILE
+           PERFORM VERIFY-OUT1-FILE.
+
+       CLOSE-OUT1-FILE.
+           CLOSE OUT1-FILE
+           PERFORM VERIFY-OUT1-FILE.
+
+       VERIFY-OUT1-FILE.
            IF NOT WS-OUT1-FILE-OK
                MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
                MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
                PERFORM FILE-IO-ERROR
            END-IF.
 
-       CHECK-WORK1-FILE.
+       OPEN-WORK1-INPUT.
+           OPEN INPUT WORK1-FILE
+           PERFORM VERIFY-WORK1-FILE.
+
+       OPEN-WORK1-OUTPUT.
+           OPEN OUTPUT WORK1-FILE
+           PERFORM VERIFY-WORK1-FILE.
+
+       CLOSE-WORK1-FILE.
+           CLOSE WORK1-FILE
+           PERFORM VERIFY-WORK1-FILE.
+
+       VERIFY-WORK1-FILE.
            IF NOT WS-WORK1-FILE-OK
                MOVE "WORK1-FILE" TO WS-IO-ERROR-FILE
                MOVE WS-WORK1-FILE-STATUS TO WS-IO-ERROR-CODE
                PERFORM FILE-IO-ERROR
            END-IF.
 
-       CHECK-WORK2-FILE.
+       OPEN-WORK2-INPUT.
+           OPEN INPUT WORK2-FILE
+           PERFORM VERIFY-WORK2-FILE.
+
+       OPEN-WORK2-OUTPUT.
+           OPEN OUTPUT WORK2-FILE
+           PERFORM VERIFY-WORK2-FILE.
+
+       CLOSE-WORK2-FILE.
+           CLOSE WORK2-FILE
+           PERFORM VERIFY-WORK2-FILE.
+
+       VERIFY-WORK2-FILE.
            IF NOT WS-WORK2-FILE-OK
                MOVE "WORK2-FILE" TO WS-IO-ERROR-FILE
                MOVE WS-WORK2-FILE-STATUS TO WS-IO-ERROR-CODE
                PERFORM FILE-IO-ERROR
            END-IF.
 
-       CHECK-WORK3-FILE.
+       OPEN-WORK3-INPUT.
+           OPEN INPUT WORK3-FILE
+           PERFORM VERIFY-WORK3-FILE.
+
+       OPEN-WORK3-OUTPUT.
+           OPEN OUTPUT WORK3-FILE
+           PERFORM VERIFY-WORK3-FILE.
+
+       CLOSE-WORK3-FILE.
+           CLOSE WORK3-FILE
+           PERFORM VERIFY-WORK3-FILE.
+
+
+       VERIFY-WORK3-FILE.
            IF NOT WS-WORK3-FILE-OK
                MOVE "WORK3-FILE" TO WS-IO-ERROR-FILE
                MOVE WS-WORK3-FILE-STATUS TO WS-IO-ERROR-CODE
                PERFORM FILE-IO-ERROR
            END-IF.
 
-       CHECK-WORK4-FILE.
+       OPEN-WORK4-INPUT.
+           OPEN INPUT WORK4-FILE
+           PERFORM VERIFY-WORK4-FILE.
+
+       OPEN-WORK4-OUTPUT.
+           OPEN OUTPUT WORK4-FILE
+           PERFORM VERIFY-WORK4-FILE.
+
+       CLOSE-WORK4-FILE.
+           CLOSE WORK4-FILE
+           PERFORM VERIFY-WORK4-FILE.
+
+       VERIFY-WORK4-FILE.
            IF NOT WS-WORK4-FILE-OK
                MOVE "WORK4-FILE" TO WS-IO-ERROR-FILE
                MOVE WS-WORK4-FILE-STATUS TO WS-IO-ERROR-CODE
                PERFORM FILE-IO-ERROR
            END-IF.
-
-       OPEN-IN1-FILE.
-           OPEN INPUT IN1-FILE
-           PERFORM CHECK-IN1-FILE.
-
-       CLOSE-IN1-FILE.
-           CLOSE IN1-FILE
-           PERFORM CHECK-IN1-FILE.
-
-       OPEN-OUT1-FILE.
-           OPEN OUTPUT OUT1-FILE
-           PERFORM CHECK-OUT1-FILE.
-
-       CLOSE-OUT1-FILE.
-           CLOSE OUT1-FILE
-           PERFORM CHECK-OUT1-FILE.
-
-       OPEN-WORK1-INPUT.
-           OPEN INPUT WORK1-FILE
-           PERFORM CHECK-WORK1-FILE.
-
-       OPEN-WORK1-OUTPUT.
-           OPEN OUTPUT WORK1-FILE
-           PERFORM CHECK-WORK1-FILE.
-
-       CLOSE-WORK1-FILE.
-           CLOSE WORK1-FILE
-           PERFORM CHECK-WORK1-FILE.
-
-       OPEN-WORK2-INPUT.
-           OPEN INPUT WORK2-FILE
-           PERFORM CHECK-WORK2-FILE.
-
-       OPEN-WORK2-OUTPUT.
-           OPEN OUTPUT WORK2-FILE
-           PERFORM CHECK-WORK2-FILE.
-
-       CLOSE-WORK2-FILE.
-           CLOSE WORK2-FILE
-           PERFORM CHECK-WORK2-FILE.
-
-       OPEN-WORK3-INPUT.
-           OPEN INPUT WORK3-FILE
-           PERFORM CHECK-WORK3-FILE.
-
-       OPEN-WORK3-OUTPUT.
-           OPEN OUTPUT WORK3-FILE
-           PERFORM CHECK-WORK3-FILE.
-
-       CLOSE-WORK3-FILE.
-           CLOSE WORK3-FILE
-           PERFORM CHECK-WORK3-FILE.
-
-       OPEN-WORK4-INPUT.
-           OPEN INPUT WORK4-FILE
-           PERFORM CHECK-WORK4-FILE.
-
-       OPEN-WORK4-OUTPUT.
-           OPEN OUTPUT WORK4-FILE
-           PERFORM CHECK-WORK4-FILE.
-
-       CLOSE-WORK4-FILE.
-           CLOSE WORK4-FILE
-           PERFORM CHECK-WORK4-FILE.
-
        COPY file_io_error_proc.
