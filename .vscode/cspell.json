@@ -1,6 +1,14 @@
 {
   "version": "0.2",
   "ignorePaths": [
+    ".git/",
+    ".devcontainer/",
+    ".github/",
+    ".vscode/",
+    ".editorconfig",
+    ".gitignore",
+    ".*",
+    "**/*.lock",
     "[Dd]ockerfile",
     "devcontainer{,*}.json",
     "Makefile",
