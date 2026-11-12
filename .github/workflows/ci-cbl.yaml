@@ -44,10 +44,11 @@ jobs:
     steps:
     - uses: actions/checkout@v7
 
-    - name: Setup GnuCOBOL
-      uses: fabasoad/setup-cobol-action@v1
-      with:
-        version: "3.2"
+    - name: Setup GnuCOBOL and dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y gnucobol
+        sudo apt install -y uuid-dev
 
     - name: Build
       run: make
