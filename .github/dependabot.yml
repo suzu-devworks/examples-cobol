@@ -6,7 +6,26 @@
 
 version: 2
 updates:
- - package-ecosystem: "devcontainers"
-   directory: "/"
-   schedule:
-     interval: weekly
+  # 1. Devcontainers
+  - package-ecosystem: 'devcontainers'
+    directory: '/'
+    schedule:
+      interval: 'monthly'
+    open-pull-requests-limit: 0
+    groups:
+      devcontainers-security:
+        applies-to: 'security-updates'
+        patterns:
+          - '*'
+
+  # 2. GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 0
+    groups:
+      actions-security:
+        applies-to: "security-updates"
+        patterns:
+          - "*"

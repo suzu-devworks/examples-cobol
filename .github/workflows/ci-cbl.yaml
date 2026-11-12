@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - 'src/'
+  pull_request:
+    paths:
+      - 'src/'
+      - '.github/workflows/ci-cbl.yaml'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install actions-lock extension
+        run: gh extension install github/gh-actions-lock
+
+      - name: Verify actions-lock
+        run: gh actions-lock --verify
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    needs: verify-lock
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Setup GnuCOBOL and dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y gnucobol
+        sudo apt install -y uuid-dev libcurl4-gnutls-dev
+
+    - name: Build
+      run: make
