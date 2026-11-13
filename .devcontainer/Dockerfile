@@ -10,7 +10,7 @@ RUN set -x \
     # Install libraries
     && apt -y install --no-install-recommends \
         gnucobol \
-        uuid-dev \
+        uuid-dev libcurl4-gnutls-dev \
     ;
 
 # Clean up

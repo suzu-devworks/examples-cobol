@@ -6,6 +6,8 @@ echo "USER:" ${script_user}
 echo "DIR:" ${script_dir}
 echo
 
+sudo chown vscode .copilot
+
 # Install GitHub CLI extension for actions lock
 # To perform an update, run the command:
 #   `gh actions-lock --relock --no-narrow`.
