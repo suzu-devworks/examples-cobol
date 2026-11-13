@@ -87,10 +87,16 @@ Consider this entry-point sequence:
 - Use a separate `FILE STATUS` for each file. Check it immediately after `OPEN`, `READ`, `WRITE`, and `CLOSE`.
   Name success and EOF states with level-88 conditions; on error, report the file and status and pass them to
   common error handling.
-- Determine EOF from `FILE STATUS` without duplicating the decision in `AT END` / `NOT AT END`. If the dialect
-  requires a condition clause, check the existing behavior and keep it minimal and consistent with the status
-  checks.
-- Use an EOF sentinel such as `HIGH-VALUES` only when it is safe for the record representation and comparison semantics.
+- Check `FILE STATUS` immediately after each `READ`, then choose one EOF control-flow convention rather than
+  maintaining duplicate EOF state:
+  - Use the file-status EOF condition, or one flag set from it, when EOF must remain distinct from input data,
+    especially when malformed records must be reported.
+  - Use a sentinel when it is outside the valid key domain and the algorithm can use it directly as an ordered
+    boundary. For example, ascending matching can set an exhausted input key to `HIGH-VALUES`, which sorts after
+    every valid key and avoids a separate EOF branch or flag; descending matching needs the opposite sentinel.
+    If malformed input equal to the sentinel must be reported rather than treated as EOF, use file status or a
+    flag instead.
+- When EOF is detected from `FILE STATUS`, overwrite a stale input record with `HIGH-VALUES`.
 - For `SELECT OPTIONAL` with `OPEN EXTEND`, recognize the success status for a newly created file as well as ordinary success.
 
 ## Report failures and verify
