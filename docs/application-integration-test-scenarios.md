@@ -246,8 +246,9 @@ record for an unknown employee is reported as a warning.
 `output/salary.csv` uses the same schema as `input/salary.csv`, with
 unformatted numbers. Copy it over the input and run the job again with the
 next run month: the salaries from the first run become the previous month, so
-results change from run to run (different run month or seed gives different
-attendance). Rebuild the ISAM file in each run's fresh work directory, and key
+results may change from run to run. The run month and seed affect attendance
+generation, though different arguments may still produce the same values.
+Rebuild the ISAM file in each run's fresh work directory, and key
 SQLite rows by month (replace the row for the same run month) so reruns do
 not duplicate rows. The first run has no previous-month summaries and reports
 every department as new.
