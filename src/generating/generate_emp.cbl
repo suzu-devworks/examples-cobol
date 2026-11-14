@@ -5,7 +5,8 @@
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
            SELECT OUT1-FILE    ASSIGN TO WS-OUT1-FILE-PATH
-                               ORGANIZATION IS LINE SEQUENTIAL.
+                               ORGANIZATION IS LINE SEQUENTIAL
+                               FILE STATUS IS WS-OUT1-FILE-STATUS.
 
        DATA DIVISION.
        FILE SECTION.
@@ -26,9 +27,16 @@
            05  WS-OUT1-COUNT       PIC 9(006) VALUE 0.
            05  WS-I                PIC 9(006) VALUE 0.
 
+       01  WS-FILE-STATUSES.
+       COPY file_statuses
+           REPLACING ==:PREFIX:== BY ==WS-OUT1==.
+
+       01  WS-IO-ERROR.
+       COPY file_io_error.
+
       *--- RECORD definition
        01  WS-OUT1-REC.
-       COPY emp_rec.
+       COPY emp_rec REPLACING ==:PREFIX:== BY ==WS-OUT1==.
            05  FILLER              PIC X(008).
 
       *--- For random numbers/logic
@@ -73,11 +81,11 @@ search
            PERFORM TERMINATE-PROCESS
            STOP RUN.
 
-      * --- Initialize process
        INITIALIZE-PROCESS.
            ACCEPT WS-ARG-COUNT FROM ARGUMENT-NUMBER
            IF WS-ARG-COUNT < 1
                PERFORM DISPLAY-USAGE
+               MOVE 1 TO RETURN-CODE
                STOP RUN
            END-IF
 
@@ -87,6 +95,7 @@ search
 
            IF WS-OUT1-FILE-PATH = SPACES
                PERFORM DISPLAY-USAGE
+               MOVE 1 TO RETURN-CODE
                STOP RUN
            END-IF
 
@@ -96,6 +105,7 @@ search
 
            IF WS-MAX-RECORDS < 1
                PERFORM DISPLAY-USAGE
+               MOVE 1 TO RETURN-CODE
                STOP RUN
            END-IF
 
@@ -105,6 +115,7 @@ search
 
            IF WS-MODE NOT = "rand" AND WS-MODE NOT = "sorted"
                PERFORM DISPLAY-USAGE
+               MOVE 1 TO RETURN-CODE
                STOP RUN
            END-IF
 
@@ -117,22 +128,20 @@ search
            DISPLAY "MODE:         " FUNCTION TRIM(WS-MODE)
            DISPLAY "COUNT:        " WS-MAX-RECORDS
 
-           OPEN OUTPUT OUT1-FILE.
+           PERFORM OPEN-OUT1-FILE.
 
        DISPLAY-USAGE.
            DISPLAY "Usage: generate_emp [FILENAME] [COUNT] [MODE]"
            DISPLAY "       COUNT:  1 - 999999 (default: 50)"
            DISPLAY "       MODE:   'rand' or 'sorted'".
 
-      * --- Terminate process
        TERMINATE-PROCESS.
-           CLOSE OUT1-FILE.
+           PERFORM CLOSE-OUT1-FILE
            DISPLAY "SUCCESS: Generator completed."
            DISPLAY "------------------------------"
            DISPLAY "OUTPUT1 WRITE COUNT: " WS-OUT1-COUNT
            DISPLAY "------------------------------".
 
-      * --- Main processing
        MAIN-PROCESS.
            COMPUTE WS-RAND-NUM = FUNCTION RANDOM(WS-RANDOM-SEED)
 
@@ -146,35 +155,58 @@ search
 
            *> 1. Select employee number
            IF WS-MODE = "sorted"
-               COMPUTE EMP-ID = 1000 + WS-I
+               COMPUTE WS-OUT1-EMP-ID = 1000 + WS-I
            ELSE
                COMPUTE WS-RAND-NUM = FUNCTION RANDOM
-               COMPUTE EMP-ID = 1001 + (WS-RAND-NUM * 50)
+               COMPUTE WS-OUT1-EMP-ID = 1001 + (WS-RAND-NUM * 50)
            END-IF
 
            *> 2. Select employee name
            COMPUTE WS-RAND-NUM = FUNCTION RANDOM
            COMPUTE WS-RAND-IDX = 1 + (WS-RAND-NUM * 8)
-           MOVE WS-NAMES(WS-RAND-IDX) TO EMP-NAME
+           MOVE WS-NAMES(WS-RAND-IDX) TO WS-OUT1-EMP-NAME
 
            *> 3 & 4. Select your department id and name
            COMPUTE WS-RAND-NUM = FUNCTION RANDOM
            COMPUTE WS-RAND-IDX = 1 + (WS-RAND-NUM * 5)
-           MOVE WS-MAP-DEPT-ID(WS-RAND-IDX) TO EMP-DEPT-ID
-           MOVE WS-MAP-DEPT-NAME(WS-RAND-IDX) TO EMP-DEPT-NAME
+           MOVE WS-MAP-DEPT-ID(WS-RAND-IDX) TO WS-OUT1-EMP-DEPT-ID
+           MOVE WS-MAP-DEPT-NAME(WS-RAND-IDX) TO WS-OUT1-EMP-DEPT-NAME
 
            *> 5. Joining date
            COMPUTE WS-RAND-NUM = FUNCTION RANDOM
-           COMPUTE EMP-JOIN-DATE
+           COMPUTE WS-OUT1-EMP-JOIN-DATE
                    = (WS-YEAR * 10000)
                    + (1 + FUNCTION INTEGER(WS-RAND-NUM * 12)) * 100
                    + (1 + FUNCTION INTEGER(WS-RAND-NUM * 28))
 
            *> 6. Generate random salaries
            COMPUTE WS-RAND-NUM = FUNCTION RANDOM
-           COMPUTE EMP-SALARY
+           COMPUTE WS-OUT1-EMP-SALARY
                    = 200000 + (WS-RAND-NUM * 400000).
+
+       OPEN-OUT1-FILE.
+           OPEN OUTPUT OUT1-FILE
+           IF NOT WS-OUT1-FILE-OK
+               MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
+       CLOSE-OUT1-FILE.
+           CLOSE OUT1-FILE
+           IF NOT WS-OUT1-FILE-OK
+               MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
 
        WRITE-OUT1-RECORD.
            WRITE OUT1-REC FROM WS-OUT1-REC
+           IF NOT WS-OUT1-FILE-OK
+               MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF
            ADD 1 TO WS-OUT1-COUNT.
+
+       COPY file_io_error_proc.

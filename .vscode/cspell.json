@@ -12,7 +12,8 @@
     "[Dd]ockerfile",
     "devcontainer{,*}.json",
     "Makefile",
-    "*.mk"
+    "*.mk",
+    "*.csv"
   ],
   "dictionaryDefinitions": [],
   "dictionaries": [],
@@ -22,6 +23,7 @@
     "FILEN",
     "GETPID",
     "GOBACK",
+    "ISAM",
     "Makefiles",
     "NUMVAL",
     "setopt",

@@ -22,7 +22,7 @@
            05  WS-WK-DATA             PIC X(100).
 
        LINKAGE SECTION.
-       COPY "quick_sort.cpy" REPLACING ==:PREFIX:== BY ==LK==.
+       COPY quick_sort REPLACING ==:PREFIX:== BY ==LK==.
 
        PROCEDURE DIVISION USING LK-SORT-CONFIG LK-REC-CNT LK-MEM-TABLE.
            PERFORM QUICK-SORT-START

@@ -5,11 +5,14 @@
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
            SELECT IN1-FILE     ASSIGN TO WS-IN1-FILE-PATH
-                               ORGANIZATION IS LINE SEQUENTIAL.
+                               ORGANIZATION IS LINE SEQUENTIAL
+                               FILE STATUS IS WS-IN1-FILE-STATUS.
            SELECT IN2-FILE     ASSIGN TO WS-IN2-FILE-PATH
-                               ORGANIZATION IS LINE SEQUENTIAL.
+                               ORGANIZATION IS LINE SEQUENTIAL
+                               FILE STATUS IS WS-IN2-FILE-STATUS.
            SELECT OUT1-FILE    ASSIGN TO WS-OUT1-FILE-PATH
-                               ORGANIZATION IS LINE SEQUENTIAL.
+                               ORGANIZATION IS LINE SEQUENTIAL
+                               FILE STATUS IS WS-OUT1-FILE-STATUS.
 
        DATA DIVISION.
        FILE SECTION.
@@ -33,12 +36,23 @@
            05  WS-IN2-COUNT        PIC 9(006) VALUE 0.
            05  WS-OUT1-COUNT       PIC 9(006) VALUE 0.
 
+       01  WS-FILE-STATUSES.
+       COPY file_statuses
+           REPLACING ==:PREFIX:== BY ==WS-IN1==.
+       COPY file_statuses
+           REPLACING ==:PREFIX:== BY ==WS-IN2==.
+       COPY file_statuses
+           REPLACING ==:PREFIX:== BY ==WS-OUT1==.
+
+       01  WS-IO-ERROR.
+       COPY file_io_error.
+
        01  WS-IN1-REC.
-       COPY emp_rec REPLACING ==:PREFIX:== BY ==WK-IN1==.
+       COPY emp_rec REPLACING ==:PREFIX:== BY ==WS-IN1==.
            05  FILLER              PIC X(008).
 
        01  WS-IN2-REC.
-       COPY emp_rec REPLACING ==:PREFIX:== BY ==WK-IN2==.
+       COPY emp_rec REPLACING ==:PREFIX:== BY ==WS-IN2==.
            05  FILLER              PIC X(008).
 
        01  WS-OUT1-REC.
@@ -56,11 +70,11 @@
            PERFORM TERMINATE-PROCESS
            STOP RUN.
 
-      * --- Initialize process
        INITIALIZE-PROCESS.
            ACCEPT WS-ARG-COUNT FROM ARGUMENT-NUMBER
            IF WS-ARG-COUNT < 3
                PERFORM DISPLAY-USAGE
+               MOVE 1 TO RETURN-CODE
                STOP RUN
            END-IF
 
@@ -71,6 +85,7 @@
            IF WS-IN1-FILE-PATH = SPACES OR WS-IN2-FILE-PATH = SPACES OR
               WS-OUT1-FILE-PATH = SPACES
                PERFORM DISPLAY-USAGE
+               MOVE 1 TO RETURN-CODE
                STOP RUN
            END-IF
 
@@ -79,19 +94,14 @@
            DISPLAY "INPUT2 FILE: " FUNCTION TRIM(WS-IN2-FILE-PATH)
            DISPLAY "OUTPUT FILE: " FUNCTION TRIM(WS-OUT1-FILE-PATH)
 
-           OPEN INPUT IN1-FILE IN2-FILE
-           OPEN OUTPUT OUT1-FILE.
+           PERFORM OPEN-IN1-FILE
+           PERFORM OPEN-IN2-FILE
+           PERFORM OPEN-OUT1-FILE.
 
-       DISPLAY-USAGE.
-           STRING "match_emp_one_to_one [INPUT1_FILE] [INPUT2_FILE]"
-               " [OUTPUT_FILE]"
-               INTO WS-USAGE-STR.
-           DISPLAY "Usage: " WS-USAGE-STR.
-
-      * --- Terminate process
        TERMINATE-PROCESS.
-           CLOSE IN1-FILE IN2-FILE
-           CLOSE OUT1-FILE
+           PERFORM CLOSE-IN1-FILE
+           PERFORM CLOSE-IN2-FILE
+           PERFORM CLOSE-OUT1-FILE
            DISPLAY "SUCCESS: Transforming completed."
            DISPLAY "------------------------------"
            DISPLAY "INPUT1 READ  COUNT: " WS-IN1-COUNT
@@ -99,7 +109,6 @@
            DISPLAY "OUTPUT WRITE COUNT: " WS-OUT1-COUNT
            DISPLAY "------------------------------".
 
-      * --- Main processing
        MAIN-PROCESS.
            PERFORM READ-IN1-FILE
            PERFORM READ-IN2-FILE
@@ -108,18 +117,21 @@
                          WS-IN2-REC = HIGH-VALUES
 
                EVALUATE TRUE
-                   WHEN EMP-ID OF WS-IN1-REC = EMP-ID OF WS-IN2-REC
+                   WHEN WS-IN1-EMP-ID OF WS-IN1-REC
+                          = WS-IN2-EMP-ID OF WS-IN2-REC
                        PERFORM EDIT-BOTH-RECORDS
                        PERFORM WRITE-OUT1-FILE
                        PERFORM READ-IN1-FILE
                        PERFORM READ-IN2-FILE
 
-                   WHEN EMP-ID OF WS-IN1-REC < EMP-ID OF WS-IN2-REC
+                   WHEN WS-IN1-EMP-ID OF WS-IN1-REC
+                          < WS-IN2-EMP-ID OF WS-IN2-REC
                        PERFORM EDIT-LEFT-ONLY
                        PERFORM WRITE-OUT1-FILE
                        PERFORM READ-IN1-FILE
 
-                   WHEN EMP-ID OF WS-IN1-REC > EMP-ID OF WS-IN2-REC
+                   WHEN WS-IN1-EMP-ID OF WS-IN1-REC
+                          > WS-IN2-EMP-ID OF WS-IN2-REC
                        PERFORM EDIT-RIGHT-ONLY
                        PERFORM WRITE-OUT1-FILE
                        PERFORM READ-IN2-FILE
@@ -127,36 +139,109 @@
                END-EVALUATE
            END-PERFORM.
 
+       DISPLAY-USAGE.
+           STRING "match_emp_one_to_one [INPUT1_FILE] [INPUT2_FILE]"
+               " [OUTPUT_FILE]"
+               INTO WS-USAGE-STR.
+           DISPLAY "Usage: " WS-USAGE-STR.
+
        EDIT-BOTH-RECORDS.
            MOVE SPACE TO WS-OUT1-REC
-           MOVE EMP-REC OF WS-IN1-REC TO LEFT-REC
-           MOVE EMP-REC OF WS-IN2-REC TO RIGHT-REC
-           MOVE EMP-ID OF WS-IN1-REC TO EMP-ID OF WS-OUT1-REC.
+           MOVE WS-IN1-EMP-REC OF WS-IN1-REC TO LEFT-REC
+           MOVE WS-IN2-EMP-REC OF WS-IN2-REC TO RIGHT-REC
+           MOVE WS-IN1-EMP-ID OF WS-IN1-REC TO EMP-ID OF WS-OUT1-REC.
 
        EDIT-LEFT-ONLY.
            MOVE SPACE TO WS-OUT1-REC
-           MOVE EMP-REC OF WS-IN1-REC TO LEFT-REC
-           MOVE EMP-ID OF WS-IN1-REC TO EMP-ID OF WS-OUT1-REC.
+           MOVE WS-IN1-EMP-REC OF WS-IN1-REC TO LEFT-REC
+           MOVE WS-IN1-EMP-ID OF WS-IN1-REC TO EMP-ID OF WS-OUT1-REC.
 
        EDIT-RIGHT-ONLY.
            MOVE SPACE TO WS-OUT1-REC
-           MOVE EMP-REC OF WS-IN2-REC TO RIGHT-REC
-           MOVE EMP-ID OF WS-IN2-REC TO EMP-ID OF WS-OUT1-REC.
+           MOVE WS-IN2-EMP-REC OF WS-IN2-REC TO RIGHT-REC
+           MOVE WS-IN2-EMP-ID OF WS-IN2-REC TO EMP-ID OF WS-OUT1-REC.
+
+       OPEN-IN1-FILE.
+           OPEN INPUT IN1-FILE
+           IF NOT WS-IN1-FILE-OK
+               MOVE "IN1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-IN1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
+       CLOSE-IN1-FILE.
+           CLOSE IN1-FILE
+           IF NOT WS-IN1-FILE-OK
+               MOVE "IN1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-IN1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
+       READ-IN1-FILE.
+           READ IN1-FILE INTO WS-IN1-REC.
+           EVALUATE TRUE
+               WHEN WS-IN1-FILE-OK
+                   ADD 1 TO WS-IN1-COUNT
+               WHEN WS-IN1-FILE-EOF
+                   MOVE HIGH-VALUES TO WS-IN1-REC
+               WHEN OTHER
+                   MOVE "IN1-FILE" TO WS-IO-ERROR-FILE
+                   MOVE WS-IN1-FILE-STATUS TO WS-IO-ERROR-CODE
+                   PERFORM FILE-IO-ERROR
+           END-EVALUATE.
+
+       OPEN-IN2-FILE.
+           OPEN INPUT IN2-FILE
+           IF NOT WS-IN2-FILE-OK
+               MOVE "IN2-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-IN2-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
+       CLOSE-IN2-FILE.
+           CLOSE IN2-FILE
+           IF NOT WS-IN2-FILE-OK
+               MOVE "IN2-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-IN2-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
+       READ-IN2-FILE.
+           READ IN2-FILE INTO WS-IN2-REC.
+           EVALUATE TRUE
+               WHEN WS-IN2-FILE-OK
+                   ADD 1 TO WS-IN2-COUNT
+               WHEN WS-IN2-FILE-EOF
+                   MOVE HIGH-VALUES TO WS-IN2-REC
+               WHEN OTHER
+                   MOVE "IN2-FILE" TO WS-IO-ERROR-FILE
+                   MOVE WS-IN2-FILE-STATUS TO WS-IO-ERROR-CODE
+                   PERFORM FILE-IO-ERROR
+           END-EVALUATE.
+
+       OPEN-OUT1-FILE.
+           OPEN OUTPUT OUT1-FILE
+           IF NOT WS-OUT1-FILE-OK
+               MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
+
+       CLOSE-OUT1-FILE.
+           CLOSE OUT1-FILE
+           IF NOT WS-OUT1-FILE-OK
+               MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF.
 
        WRITE-OUT1-FILE.
            WRITE OUT1-REC FROM WS-OUT1-REC
+           IF NOT WS-OUT1-FILE-OK
+               MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+               PERFORM FILE-IO-ERROR
+           END-IF
            ADD 1 TO WS-OUT1-COUNT.
 
-       READ-IN1-FILE.
-           READ IN1-FILE INTO WS-IN1-REC
-             AT END MOVE HIGH-VALUES TO WS-IN1-REC
-             NOT AT END
-                   ADD 1 TO WS-IN1-COUNT
-           END-READ.
-
-       READ-IN2-FILE.
-           READ IN2-FILE INTO WS-IN2-REC
-              AT END MOVE HIGH-VALUES TO WS-IN2-REC
-              NOT AT END
-                  ADD 1 TO WS-IN2-COUNT
-           END-READ.
+       COPY file_io_error_proc.
