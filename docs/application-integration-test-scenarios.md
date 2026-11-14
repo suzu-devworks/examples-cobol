@@ -2,14 +2,16 @@
 
 This document proposes an end-to-end batch scenario that connects the COBOL
 examples under `src/`. The shell script acts as a job controller: it prepares
-the work directory, runs each program in order, and stops when a step fails.
-It is a shell-based JCL-style example, not a proposal to add a mainframe JCL
-runtime.
+the work directory, runs each step in order, and stops when a step fails.
+JSON and XML conversion use separate shell scripts launched as child processes;
+the other batch steps use COBOL programs. This is a shell-based JCL-style
+example, not a proposal to add a mainframe JCL runtime.
 
 The scenario uses employees, departments, and salaries so that each processing
 step has a concrete business purpose. Existing COBOL programs are reused where
-possible. The remaining CSV, JSON, XML, SQLite, and ISAM adapters are
-additional work and are marked as such in the flow.
+possible. The JSON/XML shell adapters and the remaining SQLite and ISAM
+adapters, plus the outbound salary CSV adapter, are additional work and are
+marked as such in the flow.
 
 ## End-to-End Flow
 
@@ -21,7 +23,7 @@ flowchart TD
 
     subgraph inputs["1. Read fixed inputs"]
         emp_json[/input/emp.json/]
-        emp_reader["transform_from_emp_json"]
+        emp_reader["transform_from_emp_json.sh<br/>Child shell process"]
         emp_in[(work/emp.dat)]
 
         salary_csv[/input/salary.csv/]
@@ -29,7 +31,7 @@ flowchart TD
         prev_salary[(work/previous_salary.dat)]
 
         dept_xml[/input/dept.xml/]
-        xml_reader["transform_from_dept_xml"]
+        xml_reader["transform_from_dept_xml.sh<br/>Child shell process"]
         dept_in[(work/dept.dat)]
 
         emp_json --> emp_reader --> emp_in
@@ -142,18 +144,19 @@ flowchart TD
     next_month_csv -->|"Verify CSV schema and values"| checks
 ```
 
-## Programs
+## Components
 
-Names follow the existing `verb_object` convention. Each
-program does one thing. New programs live in new category folders under `src/`.
+COBOL program names follow the existing `verb_object` convention, and each
+program does one thing. COBOL programs live under `src/`; integration shell
+scripts live under `scripts/integration/`.
 
-| Program | Folder | Status | Role |
+| Component | Folder | Status | Role |
 | --- | --- | --- | --- |
 | `run_integration_scenario.sh` | `scripts/integration/` | Additional | Shell job controller (JCL-style). |
-| `transform_from_emp_json` | `src/transforming/` | Additional | Convert `input/emp.json` to `emp.dat`. |
-| `transform_from_dept_xml` | `src/transforming/` | Additional | Convert `input/dept.xml` to `dept.dat`. |
+| `transform_from_emp_json.sh` | `scripts/integration/` | Additional | Convert `input/emp.json` to fixed-length `emp.dat` using `jq`; launched as a child shell process. |
+| `transform_from_dept_xml.sh` | `scripts/integration/` | Additional | Convert `input/dept.xml` to fixed-length `dept.dat` using `xmlstarlet`; launched as a child shell process. |
 | `transform_from_salary_csv` | `src/transforming/` | Implemented | Convert `input/salary.csv` to `previous_salary.dat`, ignoring its dates and stamping the previous month. |
-| `generate_attendance` | `src/generating/` | Additional | Generate `attendance.dat` from `emp.dat`, the run month, and a seed. |
+| `generate_attendance` | `src/generating/` | Implemented | Generate `attendance.dat` from `emp.dat`, the run month, and a seed. |
 | `build_emp_isam` | `src/indexing/` | Additional | Build `emp.isam` from `emp.dat` and `previous_salary.dat`. |
 | `update_salary_isam` | `src/indexing/` | Additional | Apply attendance adjustments to each ISAM record by key. |
 | `export_emp_isam` | `src/indexing/` | Additional | Export ISAM records in key order (before and after the update). |
@@ -200,8 +203,19 @@ example-specific padding outside these shared layouts.
 
 ## Fixed Inputs and Salary Generator
 
-Keep these three inputs as small, checked-in fixtures. Each has its own reader
-and is not regenerated for each run:
+Keep these three inputs as small, checked-in fixtures; do not regenerate them
+for each run. The job controller launches the JSON and XML conversion scripts
+as child shell processes rather than sourcing them. Those scripts require
+`jq` and `xmlstarlet`, respectively, and write the fixed-length records
+consumed by the COBOL programs. Invoke them with input and output paths:
+
+```sh
+bash scripts/integration/transform_from_emp_json.sh INPUT_JSON OUTPUT_FILE
+bash scripts/integration/transform_from_dept_xml.sh INPUT_XML OUTPUT_FILE
+```
+
+They must return nonzero for missing or malformed input so the job controller
+stops. The salary CSV continues to use its COBOL reader.
 
 | File | Format | Content |
 | --- | --- | --- |

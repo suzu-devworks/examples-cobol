@@ -27,7 +27,8 @@
     "NUMVAL",
     "setopt",
     "transpiles",
-    "unparse"
+    "unparse",
+    "xmlstarlet"
   ],
   "ignoreWords": [],
   "import": [],
