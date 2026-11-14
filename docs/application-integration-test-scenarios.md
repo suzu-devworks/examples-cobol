@@ -3,15 +3,13 @@
 This document proposes an end-to-end batch scenario that connects the COBOL
 examples under `src/`. The shell script acts as a job controller: it prepares
 the work directory, runs each step in order, and stops when a step fails.
-JSON and XML conversion use separate shell scripts launched as child processes;
-the other batch steps use COBOL programs. This is a shell-based JCL-style
-example, not a proposal to add a mainframe JCL runtime.
+Input conversion and other batch steps use COBOL programs. This is a shell-based
+JCL-style example, not a proposal to add a mainframe JCL runtime.
 
 The scenario uses employees, departments, and salaries so that each processing
 step has a concrete business purpose. Existing COBOL programs are reused where
-possible. The JSON/XML shell adapters and the remaining SQLite and ISAM
-adapters, plus the outbound salary CSV adapter, are additional work and are
-marked as such in the flow.
+possible. The outbound salary CSV, SQLite, and ISAM adapters remain additional
+work and are marked as such in the flow.
 
 ## End-to-End Flow
 
@@ -22,21 +20,21 @@ flowchart TD
     run_month[/Run month: YYYY-MM/]
 
     subgraph inputs["1. Read fixed inputs"]
-        emp_json[/input/emp.json/]
-        emp_reader["transform_from_emp_json.sh<br/>Child shell process"]
+        emp_csv[/input/emp.csv/]
+        emp_reader["transform_from_emp_csv"]
         emp_in[(work/emp.dat)]
 
         salary_csv[/input/salary.csv/]
         salary_reader["transform_from_salary_csv<br/>Ignore file dates; stamp the previous month"]
         prev_salary[(work/previous_salary.dat)]
 
-        dept_xml[/input/dept.xml/]
-        xml_reader["transform_from_dept_xml.sh<br/>Child shell process"]
+        dept_csv[/input/dept.csv/]
+        dept_reader["transform_from_dept_csv"]
         dept_in[(work/dept.dat)]
 
-        emp_json --> emp_reader --> emp_in
+        emp_csv --> emp_reader --> emp_in
         salary_csv --> salary_reader --> prev_salary
-        dept_xml --> xml_reader --> dept_in
+        dept_csv --> dept_reader --> dept_in
     end
 
     emp_in -->|"Employee IDs"| attendance_gen
@@ -44,7 +42,7 @@ flowchart TD
     run_month --> salary_reader
     job --> emp_reader
     job --> salary_reader
-    job --> xml_reader
+    job --> dept_reader
     job --> attendance_gen
 
     subgraph salary_cycle["2. Create current-month salary with the ISAM salary master"]
@@ -153,8 +151,8 @@ scripts live under `scripts/integration/`.
 | Component | Folder | Status | Role |
 | --- | --- | --- | --- |
 | `run_integration_scenario.sh` | `scripts/integration/` | Additional | Shell job controller (JCL-style). |
-| `transform_from_emp_json.sh` | `scripts/integration/` | Additional | Convert `input/emp.json` to fixed-length `emp.dat` using `jq`; launched as a child shell process. |
-| `transform_from_dept_xml.sh` | `scripts/integration/` | Additional | Convert `input/dept.xml` to fixed-length `dept.dat` using `xmlstarlet`; launched as a child shell process. |
+| `transform_from_emp_csv` | `src/transforming/` | Implemented | Convert `input/emp.csv` to fixed-length `emp.dat`. |
+| `transform_from_dept_csv` | `src/transforming/` | Implemented | Convert `input/dept.csv` to fixed-length `dept.dat`. |
 | `transform_from_salary_csv` | `src/transforming/` | Implemented | Convert `input/salary.csv` to `previous_salary.dat`, ignoring its dates and stamping the previous month. |
 | `generate_attendance` | `src/generating/` | Implemented | Generate `attendance.dat` from `emp.dat`, the run month, and a seed. |
 | `build_emp_isam` | `src/indexing/` | Additional | Build `emp.isam` from `emp.dat` and `previous_salary.dat`. |
@@ -204,24 +202,29 @@ example-specific padding outside these shared layouts.
 ## Fixed Inputs and Salary Generator
 
 Keep these three inputs as small, checked-in fixtures; do not regenerate them
-for each run. The job controller launches the JSON and XML conversion scripts
-as child shell processes rather than sourcing them. Those scripts require
-`jq` and `xmlstarlet`, respectively, and write the fixed-length records
-consumed by the COBOL programs. Invoke them with input and output paths:
-
-```sh
-bash scripts/integration/transform_from_emp_json.sh INPUT_JSON OUTPUT_FILE
-bash scripts/integration/transform_from_dept_xml.sh INPUT_XML OUTPUT_FILE
-```
-
-They must return nonzero for missing or malformed input so the job controller
-stops. The salary CSV continues to use its COBOL reader.
+for each run. The COBOL readers write fixed-length records for downstream
+programs. Employee and department CSV rows use unquoted fields with no embedded
+commas or quotation marks. Their optional first-line headers must match the
+schemas below exactly. Malformed rows fail with a nonzero status so the job
+controller stops.
 
 | File | Format | Content |
 | --- | --- | --- |
-| `input/emp.json` | JSON | Current employee roster: ID, name, department ID, join date. |
-| `input/dept.xml` | XML | Department IDs and names. |
+| `input/emp.csv` | CSV | `employee_id,employee_name,department_id,join_date` |
+| `input/dept.csv` | CSV | `department_id,department_name` |
 | `input/salary.csv` | CSV | Previous-month salaries: `salary_month,employee_id,monthly_salary`. |
+
+Employee CSV rows contain exactly four fields: a four-digit employee ID, a
+nonempty name of at most 10 bytes, a four-digit department ID, and an
+eight-digit join date (`YYYYMMDD`). The reader writes the 42-byte `EMP-REC`;
+the department name is blank and salary is zero because those values are
+provided separately by the department and salary inputs. Department CSV rows
+contain exactly two fields: a four-digit department ID and a nonempty name of
+at most 10 bytes. The reader writes the 14-byte department master record.
+
+Run the employee and department readers as
+`transform_from_emp_csv INPUT_CSV OUTPUT_FILE` and
+`transform_from_dept_csv INPUT_CSV OUTPUT_FILE`.
 
 The salary CSV reader ignores the `salary_month` values in the file and
 stamps every row with the month before `--run-month` (for example
@@ -291,7 +294,7 @@ exercise:
 
 - An employee with overtime, one with absences, one with both, and one with
   no attendance row (salary unchanged).
-- An attendance record whose employee ID is not in `emp.json`, and a salary
+- An attendance record whose employee ID is not in `emp.csv`, and a salary
   row whose employee ID is not in the roster.
 - A salary CSV whose date column holds an arbitrary month, to confirm it is
   ignored.
@@ -301,7 +304,7 @@ exercise:
   employee whose department code is unknown.
 - Employees on both sides of the join-date cutoff, including a record exactly
   on the cutoff.
-- Empty input and malformed `salary.csv`, `emp.json`, or `dept.xml`
+- Empty input and malformed `salary.csv`, `emp.csv`, or `dept.csv`
   records at the input boundaries.
 
 For each run, verify that:

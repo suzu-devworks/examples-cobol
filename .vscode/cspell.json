@@ -12,7 +12,8 @@
     "[Dd]ockerfile",
     "devcontainer{,*}.json",
     "Makefile",
-    "*.mk"
+    "*.mk",
+    "*.csv"
   ],
   "dictionaryDefinitions": [],
   "dictionaries": [],
@@ -27,8 +28,7 @@
     "NUMVAL",
     "setopt",
     "transpiles",
-    "unparse",
-    "xmlstarlet"
+    "unparse"
   ],
   "ignoreWords": [],
   "import": [],
