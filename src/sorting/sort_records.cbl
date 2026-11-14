@@ -217,8 +217,7 @@
            END-IF.
 
        READ-IN1-FILE.
-           READ IN1-FILE
-           END-READ.
+           READ IN1-FILE.
 
        OPEN-OUT1-FILE.
            OPEN OUTPUT OUT1-FILE

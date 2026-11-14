@@ -217,7 +217,6 @@
                *> [Safety guard] Read so as not to exceed the maximum number of arrays
                PERFORM UNTIL WS-REC-CNT = WS-REC-MAX OR IN1-EOF = "Y"
                    READ IN1-FILE
-                   END-READ
                    EVALUATE TRUE
                        WHEN WS-IN1-FILE-OK
                            ADD 1 TO WS-IN1-COUNT
@@ -409,7 +408,6 @@
        READ-WORK1.
            MOVE W1-CUR-KEY TO W1-PREV-KEY
            READ WORK1-FILE
-           END-READ
            EVALUATE TRUE
                WHEN WS-WORK1-FILE-OK
                    MOVE SPACE TO W1-CUR-KEY
@@ -427,7 +425,6 @@
        READ-WORK2.
            MOVE W2-CUR-KEY TO W2-PREV-KEY
            READ WORK2-FILE
-           END-READ
            EVALUATE TRUE
                WHEN WS-WORK2-FILE-OK
                    MOVE SPACE TO W2-CUR-KEY
@@ -445,7 +442,6 @@
        READ-WORK3.
            MOVE W3-CUR-KEY TO W3-PREV-KEY
            READ WORK3-FILE
-           END-READ
            EVALUATE TRUE
                WHEN WS-WORK3-FILE-OK
                    MOVE SPACE TO W3-CUR-KEY
@@ -463,7 +459,6 @@
        READ-WORK4.
            MOVE W4-CUR-KEY TO W4-PREV-KEY
            READ WORK4-FILE
-           END-READ
            EVALUATE TRUE
                WHEN WS-WORK4-FILE-OK
                    MOVE SPACE TO W4-CUR-KEY
@@ -528,7 +523,6 @@
            MOVE "N" TO W1-EOF
            PERFORM UNTIL W1-EOF = "Y"
                READ WORK1-FILE
-               END-READ
                EVALUATE TRUE
                    WHEN WS-WORK1-FILE-OK
                        WRITE OUT1-REC FROM W1-REC
@@ -549,7 +543,6 @@
            MOVE "N" TO W3-EOF
            PERFORM UNTIL W3-EOF = "Y"
                READ WORK3-FILE
-               END-READ
                EVALUATE TRUE
                    WHEN WS-WORK3-FILE-OK
                        WRITE OUT1-REC FROM W3-REC

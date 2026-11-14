@@ -141,8 +141,7 @@
            END-IF.
 
        READ-IN1-FILE.
-           READ IN1-FILE INTO WS-IN1-REC
-           END-READ.
+           READ IN1-FILE INTO WS-IN1-REC.
            EVALUATE TRUE
                WHEN WS-IN1-FILE-OK
                    ADD 1 TO WS-IN1-COUNT
