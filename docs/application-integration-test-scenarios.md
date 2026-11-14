@@ -155,7 +155,7 @@ scripts live under `scripts/integration/`.
 | `transform_from_dept_csv` | `src/transforming/` | Implemented | Convert `input/dept.csv` to fixed-length `dept.dat`. |
 | `transform_from_salary_csv` | `src/transforming/` | Implemented | Convert `input/salary.csv` to `previous_salary.dat`, ignoring its dates and stamping the previous month. |
 | `generate_attendance` | `src/generating/` | Implemented | Generate `attendance.dat` from `emp.dat`, the run month, and a seed. |
-| `build_emp_isam` | `src/indexing/` | Additional | Build `emp.isam` from `emp.dat` and `previous_salary.dat`. |
+| `build_emp_isam` | `src/indexing/` | Implemented | Build `emp.isam` from `emp.dat` and `previous_salary.dat`, keyed by employee ID. |
 | `update_salary_isam` | `src/indexing/` | Additional | Apply attendance adjustments to each ISAM record by key. |
 | `export_emp_isam` | `src/indexing/` | Additional | Export ISAM records in key order (before and after the update). |
 | `sort_records` | `src/sorting/` | Existing | Sort employee and summary files by employee ID or department ID. |
@@ -242,6 +242,14 @@ It accepts an optional first-line header
 three comma-separated fields, with a four-digit employee ID and a six-digit
 monthly salary. The salary-month field is ignored; malformed data rows fail
 the program with a nonzero status.
+
+Build the indexed employee salary master as
+`build_emp_isam EMPLOYEE_FILE PREVIOUS_SALARY_FILE OUTPUT_ISAM_FILE`. It reads
+42-byte employee records and 16-byte salary records, then writes 48-byte
+indexed records keyed by employee ID. Input ordering does not matter. An
+employee without a salary record is written with a zero salary and month; a
+salary record for an unknown employee or a duplicate employee or salary ID
+fails the program with a nonzero status.
 
 Add one focused attendance generator that writes only the fixed-length
 `work/attendance.dat`. It reads employee IDs from `emp.dat` and takes the run
