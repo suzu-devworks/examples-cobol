@@ -8,8 +8,8 @@ runtime.
 
 The scenario uses employees, departments, and salaries so that each processing
 step has a concrete business purpose. Existing COBOL programs are reused where
-possible. CSV, JSON, XML, SQLite, and ISAM adapters are additional work and are
-marked as such in the flow.
+possible. The remaining CSV, JSON, XML, SQLite, and ISAM adapters are
+additional work and are marked as such in the flow.
 
 ## End-to-End Flow
 
@@ -152,7 +152,7 @@ program does one thing. New programs live in new category folders under `src/`.
 | `run_integration_scenario.sh` | `scripts/integration/` | Additional | Shell job controller (JCL-style). |
 | `transform_from_emp_json` | `src/transforming/` | Additional | Convert `input/emp.json` to `emp.dat`. |
 | `transform_from_dept_xml` | `src/transforming/` | Additional | Convert `input/dept.xml` to `dept.dat`. |
-| `transform_from_salary_csv` | `src/transforming/` | Additional | Convert `input/salary.csv` to `previous_salary.dat`, ignoring its dates and stamping the previous month. |
+| `transform_from_salary_csv` | `src/transforming/` | Implemented | Convert `input/salary.csv` to `previous_salary.dat`, ignoring its dates and stamping the previous month. |
 | `generate_attendance` | `src/generating/` | Additional | Generate `attendance.dat` from `emp.dat`, the run month, and a seed. |
 | `build_emp_isam` | `src/indexing/` | Additional | Build `emp.isam` from `emp.dat` and `previous_salary.dat`. |
 | `update_salary_isam` | `src/indexing/` | Additional | Apply attendance adjustments to each ISAM record by key. |
@@ -217,6 +217,14 @@ output be fed back in unchanged. It writes a fixed-length intermediate record:
 employee ID `9(004)`, salary month `9(006)` (`YYYYMM`), and monthly salary
 `9(006)`, defined in `src/copies/salary_rec.cpy`. The load step builds the
 ISAM salary master from this file.
+
+Run the reader as
+`transform_from_salary_csv INPUT_CSV OUTPUT_FILE --run-month YYYY-MM`.
+It accepts an optional first-line header
+`salary_month,employee_id,monthly_salary`. Data rows must contain exactly
+three comma-separated fields, with a four-digit employee ID and a six-digit
+monthly salary. The salary-month field is ignored; malformed data rows fail
+the program with a nonzero status.
 
 Add one focused attendance generator that writes only the fixed-length
 `work/attendance.dat`. It reads employee IDs from `emp.dat` and takes the run

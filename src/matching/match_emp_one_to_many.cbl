@@ -48,11 +48,11 @@
        COPY file_io_error.
 
        01  WS-IN1-REC.
-       COPY dept_rec.
+       COPY dept_rec REPLACING ==:PREFIX:== BY ==WS-IN1==.
            05  FILLER              PIC X(018).
 
        01  WS-IN2-REC.
-       COPY emp_rec.
+       COPY emp_rec REPLACING ==:PREFIX:== BY ==WS-IN2==.
            05  FILLER              PIC X(008).
 
        01  WS-OUT1-REC.
@@ -124,24 +124,24 @@
                          WS-IN2-REC = HIGH-VALUES
 
                EVALUATE TRUE
-                   WHEN DEPT-ID OF WS-IN1-REC
-                           = EMP-DEPT-ID OF WS-IN2-REC
-                       PERFORM UNTIL NOT DEPT-ID OF WS-IN1-REC
-                               = EMP-DEPT-ID OF WS-IN2-REC
+                   WHEN WS-IN1-DEPT-ID OF WS-IN1-REC
+                           = WS-IN2-EMP-DEPT-ID OF WS-IN2-REC
+                       PERFORM UNTIL NOT WS-IN1-DEPT-ID OF WS-IN1-REC
+                               = WS-IN2-EMP-DEPT-ID OF WS-IN2-REC
                            PERFORM EDIT-BOTH-RECORDS
                            PERFORM WRITE-OUT1-FILE
                            PERFORM READ-IN2-FILE
                        END-PERFORM
 
-                   WHEN DEPT-ID OF WS-IN1-REC
-                           < EMP-DEPT-ID OF WS-IN2-REC
+                   WHEN WS-IN1-DEPT-ID OF WS-IN1-REC
+                           < WS-IN2-EMP-DEPT-ID OF WS-IN2-REC
                        PERFORM EDIT-DEPT-ONLY
                        PERFORM WRITE-OUT1-FILE
 
-                   WHEN DEPT-ID OF WS-IN1-REC
-                           > EMP-DEPT-ID OF WS-IN2-REC
+                   WHEN WS-IN1-DEPT-ID OF WS-IN1-REC
+                           > WS-IN2-EMP-DEPT-ID OF WS-IN2-REC
                        DISPLAY "WARNING: Employee record with ID "
-                               EMP-ID OF WS-IN2-REC
+                               WS-IN2-EMP-ID OF WS-IN2-REC
                                " has no matching department record."
                        PERFORM READ-IN2-FILE
 
@@ -153,12 +153,15 @@
 
        EDIT-BOTH-RECORDS.
            MOVE SPACE TO WS-OUT1-REC
-           MOVE EMP-REC OF WS-IN2-REC TO EMP-REC OF WS-OUT1-REC
-           MOVE DEPT-REC OF WS-IN1-REC TO DEPT-REC OF WS-OUT1-REC.
+           MOVE WS-IN2-EMP-REC OF WS-IN2-REC
+             TO EMP-REC OF WS-OUT1-REC
+           MOVE WS-IN1-DEPT-REC OF WS-IN1-REC
+             TO DEPT-REC OF WS-OUT1-REC.
 
        EDIT-DEPT-ONLY.
            MOVE SPACE TO WS-OUT1-REC
-           MOVE DEPT-REC OF WS-IN1-REC TO DEPT-REC OF WS-OUT1-REC.
+           MOVE WS-IN1-DEPT-REC OF WS-IN1-REC
+             TO DEPT-REC OF WS-OUT1-REC.
 
        OPEN-IN1-FILE.
            OPEN INPUT IN1-FILE

@@ -49,7 +49,7 @@
        COPY file_io_error.
 
        01  WS-IN1-REC.
-       COPY emp_rec.
+       COPY emp_rec REPLACING ==:PREFIX:== BY ==WS-IN1==.
            05  FILLER              PIC X(008).
 
        01  WS-VARS.
@@ -124,7 +124,7 @@
 
            PERFORM UNTIL WS-IN1-REC = HIGH-VALUES
 
-               IF EMP-JOIN-DATE < WS-SEPARATE-DATE
+               IF WS-IN1-EMP-JOIN-DATE < WS-SEPARATE-DATE
                    PERFORM WRITE-OUT1-FILE
                    ADD 1 TO WS-OUT1-COUNT
                ELSE

@@ -39,7 +39,7 @@
        COPY file_io_error.
 
        01  WS-IN1-REC.
-       COPY emp_rec.
+       COPY emp_rec REPLACING ==:PREFIX:== BY ==WS-IN1==.
            05  FILLER              PIC X(008).
 
        01  WS-VARS.
@@ -117,7 +117,7 @@
 
        TRANSFORM-RECORD.
            *> 1. Department code name conversion (EVALUATE)
-           EVALUATE FUNCTION TRIM(EMP-DEPT-NAME)
+           EVALUATE FUNCTION TRIM(WS-IN1-EMP-DEPT-NAME)
                WHEN "DEV"      MOVE "開発部"     TO WS-DEPT-NAME
                WHEN "SALES"    MOVE "営業部"     TO WS-DEPT-NAME
                WHEN "HR"       MOVE "人事部"     TO WS-DEPT-NAME
@@ -127,22 +127,22 @@
            END-EVALUATE
 
            *> 2. Calculation of years of service (COMPUTE / MOVE)
-           MOVE EMP-JOIN-DATE(1:4) TO WS-JOIN-YEAR
+           MOVE WS-IN1-EMP-JOIN-DATE(1:4) TO WS-JOIN-YEAR
            COMPUTE WS-SERVICE-YEARS = WS-CURRENT-YEAR - WS-JOIN-YEAR
 
            *> 3. Annual salary calculation (monthly salary * 12 months + estimated 2 months bonus)
-           COMPUTE WS-ANNUAL-SALARY = EMP-SALARY * 14
+           COMPUTE WS-ANNUAL-SALARY = WS-IN1-EMP-SALARY * 14
 
            *> 4. Formatting
            MOVE WS-SERVICE-YEARS   TO WS-FORMAT-YEARS
-           MOVE EMP-SALARY         TO WS-FORMAT-SALARY
+           MOVE WS-IN1-EMP-SALARY  TO WS-FORMAT-SALARY
            MOVE WS-ANNUAL-SALARY   TO WS-FORMAT-ANNUAL
 
            MOVE SPACE TO OUT1-REC
            STRING
-               EMP-ID                      DELIMITED BY SPACE
+               WS-IN1-EMP-ID               DELIMITED BY SPACE
                ","                         DELIMITED BY SIZE
-               EMP-NAME                    DELIMITED BY SPACE
+               WS-IN1-EMP-NAME             DELIMITED BY SPACE
                ","                         DELIMITED BY SIZE
                WS-DEPT-NAME                DELIMITED BY SPACE
                ","                         DELIMITED BY SIZE

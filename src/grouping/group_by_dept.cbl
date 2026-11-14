@@ -39,11 +39,11 @@
        COPY file_io_error.
 
        01  WS-IN1-REC.
-       COPY emp_rec.
+       COPY emp_rec REPLACING ==:PREFIX:== BY ==WS-IN1==.
            05  FILLER              PIC X(008).
 
        01  WS-OUT1-REC.
-       COPY dept_rec.
+       COPY dept_rec REPLACING ==:PREFIX:== BY ==WS-OUT1==.
            05  FILLER              PIC X(016).
 
        01  WS-VARS.
@@ -99,11 +99,11 @@
 
            PERFORM UNTIL WS-IN1-REC = HIGH-VALUES
                INITIALIZE WS-OUT1-REC
-               MOVE EMP-DEPT-ID TO DEPT-ID
+               MOVE WS-IN1-EMP-DEPT-ID TO WS-OUT1-DEPT-ID
                MOVE 0 TO WS-DEPT-MAX-SALARY
 
                PERFORM UNTIL WS-IN1-REC = HIGH-VALUES OR
-                       NOT EMP-DEPT-ID = DEPT-ID
+                       NOT WS-IN1-EMP-DEPT-ID = WS-OUT1-DEPT-ID
                    PERFORM EDIT-OUT1-REC
                    PERFORM READ-IN1-FILE
                END-PERFORM
@@ -112,17 +112,17 @@
            END-PERFORM.
 
        EDIT-OUT1-REC.
-           MOVE EMP-DEPT-ID TO DEPT-ID
-           MOVE EMP-DEPT-NAME TO DEPT-NAME
+           MOVE WS-IN1-EMP-DEPT-ID TO WS-OUT1-DEPT-ID
+           MOVE WS-IN1-EMP-DEPT-NAME TO WS-OUT1-DEPT-NAME
 
-           IF WS-DEPT-MAX-SALARY < EMP-SALARY
-               MOVE EMP-ID TO DEPT-MANAGER-ID
-               MOVE EMP-NAME TO DEPT-MANAGER-NAME
+           IF WS-DEPT-MAX-SALARY < WS-IN1-EMP-SALARY
+               MOVE WS-IN1-EMP-ID TO WS-OUT1-DEPT-MANAGER-ID
+               MOVE WS-IN1-EMP-NAME TO WS-OUT1-DEPT-MANAGER-NAME
 
-               MOVE EMP-SALARY TO WS-DEPT-MAX-SALARY
+               MOVE WS-IN1-EMP-SALARY TO WS-DEPT-MAX-SALARY
            END-IF
 
-           ADD 1 TO DEPT-MEMBER-COUNT.
+           ADD 1 TO WS-OUT1-DEPT-MEMBER-COUNT.
 
        OPEN-IN1-FILE.
            OPEN INPUT IN1-FILE
@@ -178,11 +178,11 @@
                PERFORM FILE-IO-ERROR
            END-IF
            ADD 1 TO WS-OUT1-COUNT.
-           DISPLAY "DEPT-ID: " DEPT-ID
-                   " DEPT-NAME: " DEPT-NAME
-                   " MANAGER-ID: " DEPT-MANAGER-ID
-                   " MANAGER-NAME: " DEPT-MANAGER-NAME
-                   " MEMBER-COUNT: " DEPT-MEMBER-COUNT
+           DISPLAY "DEPT-ID: " WS-OUT1-DEPT-ID
+                   " DEPT-NAME: " WS-OUT1-DEPT-NAME
+                   " MANAGER-ID: " WS-OUT1-DEPT-MANAGER-ID
+                   " MANAGER-NAME: " WS-OUT1-DEPT-MANAGER-NAME
+                   " MEMBER-COUNT: " WS-OUT1-DEPT-MEMBER-COUNT
                    " MAX-SALARY: " WS-DEPT-MAX-SALARY.
 
        COPY file_io_error_proc.

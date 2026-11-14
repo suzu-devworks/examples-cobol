@@ -43,7 +43,7 @@
        COPY file_io_error.
 
        01  WS-IN1-REC.
-       COPY emp_rec.
+       COPY emp_rec REPLACING ==:PREFIX:== BY ==WS-IN1==.
            05  FILLER              PIC X(008).
 
        01  WS-VARS.
@@ -97,7 +97,7 @@
            PERFORM READ-IN-FILE
 
            PERFORM UNTIL WS-IN1-REC = HIGH-VALUES
-               MOVE EMP-DEPT-ID TO WS-DEPT-ID
+               MOVE WS-IN1-EMP-DEPT-ID TO WS-DEPT-ID
 
                STRING WS-OUT1-FILE-BASE DELIMITED BY SPACE
                    "."
@@ -109,7 +109,7 @@
                MOVE 0 TO WS-OUT1-DEPT-COUNT
 
                PERFORM UNTIL WS-IN1-REC = HIGH-VALUES OR
-                       WS-DEPT-ID NOT = EMP-DEPT-ID
+                       WS-DEPT-ID NOT = WS-IN1-EMP-DEPT-ID
 
                    PERFORM WRITE-OUT1-FILE
                    ADD 1 TO WS-OUT1-COUNT

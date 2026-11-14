@@ -36,7 +36,7 @@
 
       *--- RECORD definition
        01  WS-OUT1-REC.
-       COPY emp_rec.
+       COPY emp_rec REPLACING ==:PREFIX:== BY ==WS-OUT1==.
            05  FILLER              PIC X(008).
 
       *--- For random numbers/logic
@@ -155,33 +155,33 @@ search
 
            *> 1. Select employee number
            IF WS-MODE = "sorted"
-               COMPUTE EMP-ID = 1000 + WS-I
+               COMPUTE WS-OUT1-EMP-ID = 1000 + WS-I
            ELSE
                COMPUTE WS-RAND-NUM = FUNCTION RANDOM
-               COMPUTE EMP-ID = 1001 + (WS-RAND-NUM * 50)
+               COMPUTE WS-OUT1-EMP-ID = 1001 + (WS-RAND-NUM * 50)
            END-IF
 
            *> 2. Select employee name
            COMPUTE WS-RAND-NUM = FUNCTION RANDOM
            COMPUTE WS-RAND-IDX = 1 + (WS-RAND-NUM * 8)
-           MOVE WS-NAMES(WS-RAND-IDX) TO EMP-NAME
+           MOVE WS-NAMES(WS-RAND-IDX) TO WS-OUT1-EMP-NAME
 
            *> 3 & 4. Select your department id and name
            COMPUTE WS-RAND-NUM = FUNCTION RANDOM
            COMPUTE WS-RAND-IDX = 1 + (WS-RAND-NUM * 5)
-           MOVE WS-MAP-DEPT-ID(WS-RAND-IDX) TO EMP-DEPT-ID
-           MOVE WS-MAP-DEPT-NAME(WS-RAND-IDX) TO EMP-DEPT-NAME
+           MOVE WS-MAP-DEPT-ID(WS-RAND-IDX) TO WS-OUT1-EMP-DEPT-ID
+           MOVE WS-MAP-DEPT-NAME(WS-RAND-IDX) TO WS-OUT1-EMP-DEPT-NAME
 
            *> 5. Joining date
            COMPUTE WS-RAND-NUM = FUNCTION RANDOM
-           COMPUTE EMP-JOIN-DATE
+           COMPUTE WS-OUT1-EMP-JOIN-DATE
                    = (WS-YEAR * 10000)
                    + (1 + FUNCTION INTEGER(WS-RAND-NUM * 12)) * 100
                    + (1 + FUNCTION INTEGER(WS-RAND-NUM * 28))
 
            *> 6. Generate random salaries
            COMPUTE WS-RAND-NUM = FUNCTION RANDOM
-           COMPUTE EMP-SALARY
+           COMPUTE WS-OUT1-EMP-SALARY
                    = 200000 + (WS-RAND-NUM * 400000).
 
        OPEN-OUT1-FILE.

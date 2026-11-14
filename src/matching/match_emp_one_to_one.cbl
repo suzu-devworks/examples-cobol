@@ -48,11 +48,11 @@
        COPY file_io_error.
 
        01  WS-IN1-REC.
-       COPY emp_rec REPLACING ==:PREFIX:== BY ==WK-IN1==.
+       COPY emp_rec REPLACING ==:PREFIX:== BY ==WS-IN1==.
            05  FILLER              PIC X(008).
 
        01  WS-IN2-REC.
-       COPY emp_rec REPLACING ==:PREFIX:== BY ==WK-IN2==.
+       COPY emp_rec REPLACING ==:PREFIX:== BY ==WS-IN2==.
            05  FILLER              PIC X(008).
 
        01  WS-OUT1-REC.
@@ -117,18 +117,21 @@
                          WS-IN2-REC = HIGH-VALUES
 
                EVALUATE TRUE
-                   WHEN EMP-ID OF WS-IN1-REC = EMP-ID OF WS-IN2-REC
+                   WHEN WS-IN1-EMP-ID OF WS-IN1-REC
+                          = WS-IN2-EMP-ID OF WS-IN2-REC
                        PERFORM EDIT-BOTH-RECORDS
                        PERFORM WRITE-OUT1-FILE
                        PERFORM READ-IN1-FILE
                        PERFORM READ-IN2-FILE
 
-                   WHEN EMP-ID OF WS-IN1-REC < EMP-ID OF WS-IN2-REC
+                   WHEN WS-IN1-EMP-ID OF WS-IN1-REC
+                          < WS-IN2-EMP-ID OF WS-IN2-REC
                        PERFORM EDIT-LEFT-ONLY
                        PERFORM WRITE-OUT1-FILE
                        PERFORM READ-IN1-FILE
 
-                   WHEN EMP-ID OF WS-IN1-REC > EMP-ID OF WS-IN2-REC
+                   WHEN WS-IN1-EMP-ID OF WS-IN1-REC
+                          > WS-IN2-EMP-ID OF WS-IN2-REC
                        PERFORM EDIT-RIGHT-ONLY
                        PERFORM WRITE-OUT1-FILE
                        PERFORM READ-IN2-FILE
@@ -144,19 +147,19 @@
 
        EDIT-BOTH-RECORDS.
            MOVE SPACE TO WS-OUT1-REC
-           MOVE EMP-REC OF WS-IN1-REC TO LEFT-REC
-           MOVE EMP-REC OF WS-IN2-REC TO RIGHT-REC
-           MOVE EMP-ID OF WS-IN1-REC TO EMP-ID OF WS-OUT1-REC.
+           MOVE WS-IN1-EMP-REC OF WS-IN1-REC TO LEFT-REC
+           MOVE WS-IN2-EMP-REC OF WS-IN2-REC TO RIGHT-REC
+           MOVE WS-IN1-EMP-ID OF WS-IN1-REC TO EMP-ID OF WS-OUT1-REC.
 
        EDIT-LEFT-ONLY.
            MOVE SPACE TO WS-OUT1-REC
-           MOVE EMP-REC OF WS-IN1-REC TO LEFT-REC
-           MOVE EMP-ID OF WS-IN1-REC TO EMP-ID OF WS-OUT1-REC.
+           MOVE WS-IN1-EMP-REC OF WS-IN1-REC TO LEFT-REC
+           MOVE WS-IN1-EMP-ID OF WS-IN1-REC TO EMP-ID OF WS-OUT1-REC.
 
        EDIT-RIGHT-ONLY.
            MOVE SPACE TO WS-OUT1-REC
-           MOVE EMP-REC OF WS-IN2-REC TO RIGHT-REC
-           MOVE EMP-ID OF WS-IN2-REC TO EMP-ID OF WS-OUT1-REC.
+           MOVE WS-IN2-EMP-REC OF WS-IN2-REC TO RIGHT-REC
+           MOVE WS-IN2-EMP-ID OF WS-IN2-REC TO EMP-ID OF WS-OUT1-REC.
 
        OPEN-IN1-FILE.
            OPEN INPUT IN1-FILE
