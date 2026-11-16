@@ -23,10 +23,9 @@
        FD  IN2-FILE.
        01  IN2-REC                 PIC X(1024).
        FD  IO1-FILE.
-       01  IO1-EMP-SALARY-REC.
-       COPY emp_rec
+       01  IO1-REC.
+       COPY emp_salary_rec
            REPLACING ==:PREFIX:== BY ==IO1==.
-           03  IO1-EMP-SALARY-MONTH PIC 9(006).
 
        WORKING-STORAGE SECTION.
        01  WS-ARGS.
@@ -133,7 +132,7 @@
            PERFORM UNTIL WS-IN1-FILE-EOF
                PERFORM VALIDATE-EMPLOYEE-RECORD
                INITIALIZE IO1-EMP-SALARY-REC
-               MOVE IN1-REC(1:42) TO IO1-EMP-REC
+               MOVE IN1-REC(1:42) TO IO1-EMP-SALARY-REC(1:42)
                MOVE ZERO TO IO1-EMP-SALARY
                MOVE ZERO TO IO1-EMP-SALARY-MONTH
                PERFORM WRITE-IO1-FILE
@@ -283,7 +282,7 @@
            END-EVALUATE.
 
        WRITE-IO1-FILE.
-           WRITE IO1-EMP-SALARY-REC
+           WRITE IO1-REC
            EVALUATE TRUE
                WHEN WS-IO1-FILE-OK
                    ADD 1 TO WS-OUT1-COUNT
@@ -299,7 +298,7 @@
            END-EVALUATE.
 
        REWRITE-IO1-FILE.
-           REWRITE IO1-EMP-SALARY-REC
+           REWRITE IO1-REC
            IF NOT WS-IO1-FILE-OK
                MOVE "IO1-FILE" TO WS-IO-ERROR-FILE
                MOVE WS-IO1-FILE-STATUS TO WS-IO-ERROR-CODE

@@ -23,10 +23,9 @@
        FD  IN2-FILE.
        01  IN2-REC                 PIC X(1024).
        FD  IO1-FILE.
-       01  IO1-EMP-SALARY-REC.
-       COPY emp_rec
+       01  IO1-REC.
+       COPY emp_salary_rec
            REPLACING ==:PREFIX:== BY ==IO1==.
-           03  IO1-EMP-SALARY-MONTH PIC 9(006).
 
        WORKING-STORAGE SECTION.
        01  WS-ARGS.
@@ -428,7 +427,7 @@
            END-EVALUATE.
 
        REWRITE-IO1-RECORD.
-           REWRITE IO1-EMP-SALARY-REC
+           REWRITE IO1-REC
            IF NOT WS-IO1-FILE-OK
                MOVE "IO1-FILE" TO WS-IO-ERROR-FILE
                MOVE WS-IO1-FILE-STATUS TO WS-IO-ERROR-CODE

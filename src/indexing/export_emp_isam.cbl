@@ -16,10 +16,9 @@
        DATA DIVISION.
        FILE SECTION.
        FD  IN1-FILE.
-       01  IN1-EMP-SALARY-REC.
-       COPY emp_rec
+       01  IN1-REC.
+       COPY emp_salary_rec
            REPLACING ==:PREFIX:== BY ==IN1==.
-           03  IN1-EMP-SALARY-MONTH PIC 9(006).
        FD  OUT1-FILE.
        01  OUT1-REC                PIC X(048).
 
