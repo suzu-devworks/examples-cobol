@@ -31,7 +31,7 @@
        COPY file_statuses
            REPLACING ==:PREFIX:== BY ==WS-OUT1==.
 
-       01  WS-IO-ERROR.
+       01  WS-IO-ERROR-DATA.
        COPY file_io_error.
 
       *--- RECORD definition

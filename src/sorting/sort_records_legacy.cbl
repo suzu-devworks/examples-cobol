@@ -78,7 +78,7 @@
        COPY file_statuses
            REPLACING ==:PREFIX:== BY ==WS-WORK4==.
 
-       01  WS-IO-ERROR.
+       01  WS-IO-ERROR-DATA.
        COPY file_io_error.
 
        01  WS-VARS.
@@ -86,7 +86,10 @@
            05  WS-PID                  PIC 9(008).
 
       * --- For quick sort ---
+       01  WS-SORT-DATA.
        COPY quick_sort REPLACING ==:PREFIX:== BY ==WS==.
+      * Provide a level-01 reference to the shared table.
+       01  WS-MEM-TABLE-ARG            PIC X(1000000) BASED.
        01  WS-REC-MAX                  PIC 9(005) VALUE 100.
 
       * --- For division phase ---
@@ -252,9 +255,10 @@
        QUICK-SORT-START.
            MOVE WS-ARG-KEY-START TO WS-KEY-START
            MOVE WS-ARG-KEY-LEN   TO WS-KEY-LEN
+           SET ADDRESS OF WS-MEM-TABLE-ARG TO ADDRESS OF WS-MEM-TABLE
            CALL "quick_sort" USING BY CONTENT WS-SORT-CONFIG
                                    BY CONTENT WS-REC-CNT
-                                   BY REFERENCE WS-MEM-TABLE.
+                                   BY REFERENCE WS-MEM-TABLE-ARG.
 
        WRITE-SORTED-RUN.
            MOVE 1 TO WS-I

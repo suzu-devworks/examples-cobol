@@ -51,7 +51,7 @@
        COPY file_statuses
            REPLACING ==:PREFIX:== BY ==WS-WORK==.
 
-       01  WS-IO-ERROR.
+       01  WS-IO-ERROR-DATA.
        COPY file_io_error.
 
        01  WS-VARS.

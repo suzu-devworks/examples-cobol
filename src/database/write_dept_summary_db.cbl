@@ -27,7 +27,7 @@
        COPY file_statuses
            REPLACING ==:PREFIX:== BY ==WS-IN1==.
 
-       01  WS-IO-ERROR.
+       01  WS-IO-ERROR-DATA.
        COPY file_io_error.
 
        01  WS-DATABASE.
