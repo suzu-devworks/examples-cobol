@@ -8,8 +8,7 @@ JCL-style example, not a proposal to add a mainframe JCL runtime.
 
 The scenario uses employees, departments, and salaries so that each processing
 step has a concrete business purpose. Existing COBOL programs are reused where
-possible. The outbound salary CSV, SQLite, and ISAM adapters remain additional
-work and are marked as such in the flow.
+possible. The shell job controller remains additional work.
 
 ## End-to-End Flow
 
@@ -120,7 +119,7 @@ flowchart TD
         db[("state/summary.db<br/>SQLite: department summaries by month")]
         sqlite_read["read_dept_summary_db<br/>Previous month"]
         prev_dept_summary[(work/previous_department_summary.dat)]
-        compare_summary["compare_dept_summary<br/>Member count and highest salary changes"]
+        compare_summary["compare_dept_summary<br/>Member count and highest-paid employee changes"]
         dept_change[(work/department_change.dat)]
         sqlite_write["write_dept_summary_db<br/>Current month"]
 
@@ -160,23 +159,75 @@ scripts live under `scripts/integration/`.
 | `update_salary_isam` | `src/indexing/` | Implemented | Apply attendance adjustments and department names to each ISAM record by key. |
 | `export_emp_isam` | `src/indexing/` | Implemented | Export 48-byte ISAM records in employee-ID key order. |
 | `sort_records` | `src/sorting/` | Existing | Sort employee and summary files by employee ID or department ID. |
-| `transform_record_width` | `src/transforming/` | Additional | Convert sorted 100-byte records to 50 bytes. |
+| `transform_record_width` | `src/transforming/` | Implemented | Convert sorted 100-byte records to 50 bytes. |
 | `match_emp_one_to_one` | `src/matching/` | Existing | Compare current and previous employee records by employee ID. |
 | `group_by_dept` | `src/grouping/` | Existing | Create department member counts and highest-paid employee summaries. |
 | `match_emp_one_to_many` | `src/matching/` | Existing | Join department summaries to the employees belonging to each department. |
 | `separate_by_dept_multi` | `src/separating/` | Existing | Write one employee file per department. |
 | `separate_by_join_date` | `src/separating/` | Existing | Split employees into two files at a configured join date. |
 | `transform_emp_to_csv` | `src/transforming/` | Existing | Convert employee records into a display-oriented CSV report. |
-| `transform_to_salary_csv` | `src/transforming/` | Additional | Write `output/salary.csv` in the canonical schema. |
-| `read_dept_summary_db` | `src/database/` | Additional | Read the previous month's department summaries from SQLite. |
-| `compare_dept_summary` | `src/matching/` | Additional | Compare previous and current department summaries. |
-| `write_dept_summary_db` | `src/database/` | Additional | Save the current month's department summaries to SQLite. |
+| `transform_to_salary_csv` | `src/transforming/` | Implemented | Write `output/salary.csv` in the canonical schema. |
+| `read_dept_summary_db` | `src/database/` | Implemented | Read the previous month's department summaries from SQLite. |
+| `compare_dept_summary` | `src/matching/` | Implemented | Compare previous and current department summaries. |
+| `write_dept_summary_db` | `src/database/` | Implemented | Save the current month's department summaries to SQLite. |
 | `generate_emp` | `src/generating/` | Existing | Optional large-volume input only; its random values are not suitable for exact expected results. |
 
 The SQLite database lives outside the per-run work directory so a later run can
 read the previous month's summaries. SQLite and the ISAM file are not shared:
 ISAM serves the salary calculation, and SQLite serves the department summary
 history.
+
+## Additional Program Interfaces
+
+Build the modules with `make -C src/transforming`,
+`make -C src/matching`, and `make -C src/database`. The database programs link
+against the SQLite shared library.
+
+The database programs share statically linked subprograms under
+`src/database/shared/`. `sqlite_open`, `sqlite_close`, and `sqlite_exec` take
+the `sqlite.cpy` working-storage group and return the SQLite result in that
+group. `WS-SQLITE-RESULT` retains the raw result for diagnostics, while
+`WS-SQLITE-STATUS` provides the `WS-SQLITE-OK`, `WS-SQLITE-ROW`,
+`WS-SQLITE-DONE`, and `WS-SQLITE-ERROR` conditions for control flow.
+Each operation returning a SQLite result updates both fields. Column retrieval
+leaves them unchanged, preserving the preceding step status.
+Set `WS-DB-PATH` before opening; a successful close clears
+`WS-DB-HANDLE`. `sqlite_exec` also takes a SQL text buffer by reference and
+adds its NUL terminator in place. The trimmed SQL text must be at most 65534
+bytes and leave at least one byte in the buffer for the terminator; otherwise
+the wrapper returns SQLite's `SQLITE_TOOBIG` result (18). The shared
+`create_dept_summary_table` subprogram owns the summary table definition.
+`sqlite_prepare` takes the same SQL buffer form and creates a statement;
+`sqlite_step` returns SQLite's row (100) or done (101) status.
+`sqlite_column_int` and `sqlite_column_text` read the zero-based
+`WS-COLUMN-INDEX` into the corresponding fields in `sqlite.cpy`. The text
+pointer is owned by SQLite: copy its bytes before stepping, finalizing, or
+performing a conversion that invalidates it. `sqlite_finalize` releases the
+statement and clears `WS-STMT-HANDLE`. The step, column, and finalize calls
+are separate entry points of the same shared subprogram.
+Run `make -C src/database test` to verify the wrapper interfaces.
+
+- `transform_record_width INPUT_FILE OUTPUT_FILE` copies the first 50 bytes
+  from each 100-byte input record.
+- `transform_to_salary_csv INPUT_FILE OUTPUT_CSV` reads 48-byte employee
+  salary records and writes the canonical CSV header followed by
+  `salary_month,employee_id,monthly_salary` values without numeric formatting.
+- `read_dept_summary_db DB_FILE YYYYMM OUTPUT_FILE` writes matching 32-byte
+  department summary records ordered by department ID. A month with no rows
+  produces an empty output file; the table is created if needed.
+- `write_dept_summary_db DB_FILE YYYYMM INPUT_FILE` reads 32-byte department
+  summaries in strictly ascending department-ID order and replaces all rows
+  for the requested month in one transaction. The database table is
+  `department_summaries`, keyed by `(run_month, dept_id)`.
+- `compare_dept_summary PREVIOUS_FILE CURRENT_FILE OUTPUT_FILE` reads
+  department summaries ordered by department ID and writes a 69-byte
+  comparison record for each department in either file. Positions 1-4 contain
+  the department ID, position 5 contains the status (`N` new, `D` removed,
+  `C` changed, or `U` unchanged), positions 6-37 contain the previous record,
+  and positions 38-69 contain the current record. Missing sides are blank.
+  Since `dept_rec.cpy` stores the highest-paid employee's ID and name but not
+  the salary amount, `C` indicates a change to the summary record, including
+  member count or highest-paid employee, rather than a numeric salary delta.
 
 ## Copybooks
 
