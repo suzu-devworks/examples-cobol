@@ -1,0 +1,17 @@
+       03  WS-SQLITE.
+           05  WS-SQLITE-RESULT     PIC S9(9) COMP-5 VALUE 0.
+           05  WS-SQLITE-STATUS     PIC X VALUE SPACE.
+               88 WS-SQLITE-OK      VALUE "S".
+               88 WS-SQLITE-ROW     VALUE "R".
+               88 WS-SQLITE-DONE    VALUE "D".
+               88 WS-SQLITE-ERROR   VALUE "E".
+           05  WS-DB-HANDLE         USAGE POINTER VALUE NULL.
+           05  WS-NULL-POINTER      USAGE POINTER VALUE NULL.
+           05  WS-DB-PATH           PIC X(1025) VALUE SPACES.
+           05  WS-DB-PATH-LENGTH    PIC 9(004) COMP-5 VALUE 0.
+           05  WS-SQL-LENGTH        PIC 9(004) COMP-5 VALUE 0.
+           05  WS-STMT-HANDLE       USAGE POINTER VALUE NULL.
+           05  WS-TEXT-POINTER      USAGE POINTER VALUE NULL.
+           05  WS-COLUMN-VALUE      PIC S9(9) COMP-5 VALUE 0.
+           05  WS-COLUMN-INDEX      PIC S9(9) COMP-5 VALUE 0.
+           05  WS-COLUMN-LENGTH     PIC S9(9) COMP-5 VALUE 0.
