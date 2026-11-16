@@ -51,7 +51,7 @@ flowchart TD
         emp_isam[(work/emp.isam)]
         export_prev["export_emp_isam<br/>Before update"]
         prev_emp[(work/previous_month_emp.dat)]
-        current_salary["update_salary_isam<br/>Apply overtime and absence adjustments"]
+        current_salary["update_salary_isam<br/>Apply adjustments and set the run month"]
         export_current["export_emp_isam<br/>After update"]
         emp_current[(work/current_month_salary.dat)]
         csv_output["transform_to_salary_csv"]
@@ -64,6 +64,7 @@ flowchart TD
         attendance_gen --> attendance_in --> current_salary
         dept_in --> current_salary
         emp_isam <--> current_salary
+        run_month --> current_salary
         emp_isam --> export_current --> emp_current
         emp_current --> csv_output --> next_month_csv
     end
@@ -156,8 +157,8 @@ scripts live under `scripts/integration/`.
 | `transform_from_salary_csv` | `src/transforming/` | Implemented | Convert `input/salary.csv` to `previous_salary.dat`, ignoring its dates and stamping the previous month. |
 | `generate_attendance` | `src/generating/` | Implemented | Generate `attendance.dat` from `emp.dat`, the run month, and a seed. |
 | `build_emp_isam` | `src/indexing/` | Implemented | Build `emp.isam` from `emp.dat` and `previous_salary.dat`, keyed by employee ID. |
-| `update_salary_isam` | `src/indexing/` | Additional | Apply attendance adjustments to each ISAM record by key. |
-| `export_emp_isam` | `src/indexing/` | Additional | Export ISAM records in key order (before and after the update). |
+| `update_salary_isam` | `src/indexing/` | Implemented | Apply attendance adjustments and department names to each ISAM record by key. |
+| `export_emp_isam` | `src/indexing/` | Implemented | Export 48-byte ISAM records in employee-ID key order. |
 | `sort_records` | `src/sorting/` | Existing | Sort employee and summary files by employee ID or department ID. |
 | `transform_record_width` | `src/transforming/` | Additional | Convert sorted 100-byte records to 50 bytes. |
 | `match_emp_one_to_one` | `src/matching/` | Existing | Compare current and previous employee records by employee ID. |
@@ -251,6 +252,25 @@ employee without a salary record is written with a zero salary and month; a
 salary record for an unknown employee or a duplicate employee or salary ID
 fails the program with a nonzero status.
 
+Update the indexed salary master as
+`update_salary_isam ISAM_FILE ATTENDANCE_FILE DEPARTMENT_FILE --run-month YYYY-MM`.
+It reads 9-byte attendance and 14-byte department records; overtime hours must
+be `0` through `40`, and absence days must be `0` through `5`. The program
+updates every employee record in place, sets the salary month to the requested
+run month, and fills in the department name. The calculation is previous salary
+plus overtime hours multiplied by 25, minus absence days multiplied by 80.
+Results outside `0` through `999999`, malformed input records, duplicate
+attendance employee IDs, and duplicate department IDs fail with a nonzero
+status.
+Employees without attendance retain their salary. Attendance IDs absent from
+the ISAM file and department IDs absent from the department input are reported
+as warnings; an employee with an unknown department has a blank department
+name.
+
+Export the indexed master as
+`export_emp_isam ISAM_FILE OUTPUT_FILE`. The output is a line-sequential file
+of 48-byte employee salary records, emitted in employee-ID key order.
+
 Add one focused attendance generator that writes only the fixed-length
 `work/attendance.dat`. It reads employee IDs from `emp.dat` and takes the run
 month and a seed, so overtime hours and absence days vary per employee and per
@@ -261,12 +281,10 @@ salaries, decide the calculation rule, create other files, or write expected
 results. Tests that need exact values pass a fixed seed, or use a small fixed
 table for a few employees.
 
-The calculation rule belongs to the salary program. For example: current
-salary = previous salary + overtime hours x hourly rate - absence days x daily
-deduction, with the rates defined as documented constants. This rule is a
-scenario decision and can be changed. An employee without an attendance record
-has zero overtime and zero absence, so the salary is unchanged. An attendance
-record for an unknown employee is reported as a warning.
+The salary calculation constants are documented in the ISAM updater section
+above and can be changed with the scenario. An employee without an attendance
+record has zero overtime and zero absence, so the salary is unchanged. An
+attendance record for an unknown employee is reported as a warning.
 
 `output/salary.csv` uses the same schema as `input/salary.csv`, with
 unformatted numbers. Copy it over the input and run the job again with the

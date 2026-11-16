@@ -10,11 +10,11 @@
            SELECT IN2-FILE     ASSIGN TO WS-IN2-FILE-PATH
                                ORGANIZATION IS LINE SEQUENTIAL
                                FILE STATUS IS WS-IN2-FILE-STATUS.
-           SELECT OUT1-FILE    ASSIGN TO WS-OUT1-FILE-PATH
+           SELECT IO1-FILE     ASSIGN TO WS-OUT1-FILE-PATH
                                ORGANIZATION IS INDEXED
                                ACCESS MODE IS DYNAMIC
-                               RECORD KEY IS OUT1-EMP-ID
-                               FILE STATUS IS WS-OUT1-FILE-STATUS.
+                               RECORD KEY IS IO1-EMP-ID
+                               FILE STATUS IS WS-IO1-FILE-STATUS.
 
        DATA DIVISION.
        FILE SECTION.
@@ -22,11 +22,11 @@
        01  IN1-REC                 PIC X(1024).
        FD  IN2-FILE.
        01  IN2-REC                 PIC X(1024).
-       FD  OUT1-FILE.
-       01  OUT1-EMP-SALARY-REC.
+       FD  IO1-FILE.
+       01  IO1-EMP-SALARY-REC.
        COPY emp_rec
-           REPLACING ==:PREFIX:== BY ==OUT1==.
-           03  OUT1-EMP-SALARY-MONTH PIC 9(006).
+           REPLACING ==:PREFIX:== BY ==IO1==.
+           03  IO1-EMP-SALARY-MONTH PIC 9(006).
 
        WORKING-STORAGE SECTION.
        01  WS-ARGS.
@@ -39,7 +39,7 @@
            05  WS-IN1-COUNT        PIC 9(006) VALUE 0.
            05  WS-IN2-COUNT        PIC 9(006) VALUE 0.
            05  WS-OUT1-COUNT       PIC 9(006) VALUE 0.
-           05  WS-SALARY-COUNT     PIC 9(006) VALUE 0.
+           05  WS-IO1-UPDATE-COUNT PIC 9(006) VALUE 0.
            05  WS-MISSING-SALARY-COUNT PIC 9(006) VALUE 0.
 
        01  WS-FILE-STATUSES.
@@ -48,7 +48,7 @@
        COPY file_statuses
            REPLACING ==:PREFIX:== BY ==WS-IN2==.
        COPY file_statuses
-           REPLACING ==:PREFIX:== BY ==WS-OUT1==.
+           REPLACING ==:PREFIX:== BY ==WS-IO1==.
 
        01  WS-IO-ERROR.
        COPY file_io_error.
@@ -91,7 +91,7 @@
 
            PERFORM OPEN-IN1-FILE
            PERFORM OPEN-IN2-FILE
-           PERFORM OPEN-OUT1-FILE.
+           PERFORM OPEN-IO1-FILE.
 
        DISPLAY-USAGE.
            DISPLAY "Usage: build_emp_isam"
@@ -107,7 +107,7 @@
        TERMINATE-PROCESS.
            PERFORM CLOSE-IN1-FILE
            PERFORM CLOSE-IN2-FILE
-           PERFORM CLOSE-OUT1-FILE
+           PERFORM CLOSE-IO1-FILE
            IF WS-MISSING-SALARY-COUNT > 0
                DISPLAY "WARNING: Employees without previous salary: "
                        WS-MISSING-SALARY-COUNT
@@ -117,26 +117,26 @@
            DISPLAY "INPUT1 READ COUNT:    " WS-IN1-COUNT
            DISPLAY "INPUT2 READ COUNT:    " WS-IN2-COUNT
            DISPLAY "OUTPUT1 WRITE COUNT:  " WS-OUT1-COUNT
-           DISPLAY "OUTPUT1 UPDATE COUNT: " WS-SALARY-COUNT
+           DISPLAY "IO1 UPDATE COUNT:     " WS-IO1-UPDATE-COUNT
            DISPLAY "------------------------------".
 
        MAIN-PROCESS.
            PERFORM LOAD-EMPLOYEES
-           PERFORM CLOSE-OUT1-FILE
-           PERFORM OPEN-OUT1-IO-FILE
+           PERFORM CLOSE-IO1-FILE
+           PERFORM OPEN-IO1-FILE-FOR-UPDATE
            PERFORM APPLY-SALARIES
            COMPUTE WS-MISSING-SALARY-COUNT =
-               WS-OUT1-COUNT - WS-SALARY-COUNT.
+               WS-OUT1-COUNT - WS-IO1-UPDATE-COUNT.
 
        LOAD-EMPLOYEES.
            PERFORM READ-IN1-FILE
            PERFORM UNTIL WS-IN1-FILE-EOF
                PERFORM VALIDATE-EMPLOYEE-RECORD
-               INITIALIZE OUT1-EMP-SALARY-REC
-               MOVE IN1-REC(1:42) TO OUT1-EMP-REC
-               MOVE ZERO TO OUT1-EMP-SALARY
-               MOVE ZERO TO OUT1-EMP-SALARY-MONTH
-               PERFORM WRITE-OUT1-FILE
+               INITIALIZE IO1-EMP-SALARY-REC
+               MOVE IN1-REC(1:42) TO IO1-EMP-REC
+               MOVE ZERO TO IO1-EMP-SALARY
+               MOVE ZERO TO IO1-EMP-SALARY-MONTH
+               PERFORM WRITE-IO1-FILE
                PERFORM READ-IN1-FILE
            END-PERFORM.
 
@@ -155,19 +155,19 @@
            PERFORM READ-IN2-FILE
            PERFORM UNTIL WS-IN2-FILE-EOF
                PERFORM VALIDATE-SALARY-RECORD
-               MOVE WS-IN2-SALARY-EMP-ID TO OUT1-EMP-ID
-               PERFORM READ-OUT1-FILE
-               IF OUT1-EMP-SALARY-MONTH NOT = ZERO
+               MOVE WS-IN2-SALARY-EMP-ID TO IO1-EMP-ID
+               PERFORM READ-IO1-FILE
+               IF IO1-EMP-SALARY-MONTH NOT = ZERO
                    DISPLAY "ERROR: Duplicate salary for employee ID "
                            WS-IN2-SALARY-EMP-ID "."
                    MOVE 1 TO RETURN-CODE
                    STOP RUN
                END-IF
                MOVE WS-IN2-SALARY-MONTH
-                 TO OUT1-EMP-SALARY-MONTH
+                 TO IO1-EMP-SALARY-MONTH
                MOVE WS-IN2-MONTHLY-SALARY
-                 TO OUT1-EMP-SALARY
-               PERFORM REWRITE-OUT1-FILE
+                 TO IO1-EMP-SALARY
+               PERFORM REWRITE-IO1-FILE
                PERFORM READ-IN2-FILE
            END-PERFORM.
 
@@ -242,69 +242,69 @@
                    PERFORM FILE-IO-ERROR
            END-EVALUATE.
 
-       OPEN-OUT1-FILE.
-           OPEN OUTPUT OUT1-FILE
-           IF NOT WS-OUT1-FILE-OK
-               MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
-               MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+       OPEN-IO1-FILE.
+           OPEN OUTPUT IO1-FILE
+           IF NOT WS-IO1-FILE-OK
+               MOVE "IO1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-IO1-FILE-STATUS TO WS-IO-ERROR-CODE
                PERFORM FILE-IO-ERROR
            END-IF.
 
-       OPEN-OUT1-IO-FILE.
-           OPEN I-O OUT1-FILE
-           IF NOT WS-OUT1-FILE-OK
-               MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
-               MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+       OPEN-IO1-FILE-FOR-UPDATE.
+           OPEN I-O IO1-FILE
+           IF NOT WS-IO1-FILE-OK
+               MOVE "IO1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-IO1-FILE-STATUS TO WS-IO-ERROR-CODE
                PERFORM FILE-IO-ERROR
            END-IF.
 
-       CLOSE-OUT1-FILE.
-           CLOSE OUT1-FILE
-           IF NOT WS-OUT1-FILE-OK
-               MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
-               MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+       CLOSE-IO1-FILE.
+           CLOSE IO1-FILE
+           IF NOT WS-IO1-FILE-OK
+               MOVE "IO1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-IO1-FILE-STATUS TO WS-IO-ERROR-CODE
                PERFORM FILE-IO-ERROR
            END-IF.
 
-       READ-OUT1-FILE.
-           READ OUT1-FILE KEY IS OUT1-EMP-ID.
+       READ-IO1-FILE.
+           READ IO1-FILE KEY IS IO1-EMP-ID.
            EVALUATE TRUE
-               WHEN WS-OUT1-FILE-OK
+               WHEN WS-IO1-FILE-OK
                    CONTINUE
-               WHEN WS-OUT1-FILE-STATUS = "23"
+               WHEN WS-IO1-FILE-STATUS = "23"
                    DISPLAY "ERROR: Salary employee ID not found: "
                            WS-IN2-SALARY-EMP-ID "."
                    MOVE 1 TO RETURN-CODE
                    STOP RUN
                WHEN OTHER
-                   MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
-                   MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+                   MOVE "IO1-FILE" TO WS-IO-ERROR-FILE
+                   MOVE WS-IO1-FILE-STATUS TO WS-IO-ERROR-CODE
                    PERFORM FILE-IO-ERROR
            END-EVALUATE.
 
-       WRITE-OUT1-FILE.
-           WRITE OUT1-EMP-SALARY-REC
+       WRITE-IO1-FILE.
+           WRITE IO1-EMP-SALARY-REC
            EVALUATE TRUE
-               WHEN WS-OUT1-FILE-OK
+               WHEN WS-IO1-FILE-OK
                    ADD 1 TO WS-OUT1-COUNT
-               WHEN WS-OUT1-FILE-STATUS = "22"
+               WHEN WS-IO1-FILE-STATUS = "22"
                    DISPLAY "ERROR: Duplicate employee ID "
-                           OUT1-EMP-ID "."
+                           IO1-EMP-ID "."
                    MOVE 1 TO RETURN-CODE
                    STOP RUN
                WHEN OTHER
-                   MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
-                   MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+                   MOVE "IO1-FILE" TO WS-IO-ERROR-FILE
+                   MOVE WS-IO1-FILE-STATUS TO WS-IO-ERROR-CODE
                    PERFORM FILE-IO-ERROR
            END-EVALUATE.
 
-       REWRITE-OUT1-FILE.
-           REWRITE OUT1-EMP-SALARY-REC
-           IF NOT WS-OUT1-FILE-OK
-               MOVE "OUT1-FILE" TO WS-IO-ERROR-FILE
-               MOVE WS-OUT1-FILE-STATUS TO WS-IO-ERROR-CODE
+       REWRITE-IO1-FILE.
+           REWRITE IO1-EMP-SALARY-REC
+           IF NOT WS-IO1-FILE-OK
+               MOVE "IO1-FILE" TO WS-IO-ERROR-FILE
+               MOVE WS-IO1-FILE-STATUS TO WS-IO-ERROR-CODE
                PERFORM FILE-IO-ERROR
            END-IF
-           ADD 1 TO WS-SALARY-COUNT.
+           ADD 1 TO WS-IO1-UPDATE-COUNT.
 
        COPY file_io_error_proc.
