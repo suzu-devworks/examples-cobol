@@ -17,10 +17,14 @@ examples reflect my current understanding and are expected to evolve over time.
 - Core COBOL syntax and control flow basics
 - Input/output and interactive console handling
 - Data definitions with copybooks and shared records
-- Sorting patterns, including legacy and reusable approaches
+- Batch data processing with sorting, grouping, matching, separation, and CSV
+  conversion
+- Indexed file (ISAM) processing and SQLite database access
 - Sub-programming patterns (contained, nested, and static calls)
 - Data generation examples and UUID-oriented helper flows
 - HTTP client usage from COBOL programs
+- [JCL-style integration scenario](./docs/application-integration-test-scenarios.md)
+  with STEP-based restart
 - Build organization with Makefiles across multiple example modules
 
 ## References

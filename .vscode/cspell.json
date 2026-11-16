@@ -12,19 +12,25 @@
     "[Dd]ockerfile",
     "devcontainer{,*}.json",
     "Makefile",
-    "*.mk"
+    "*.mk",
+    "*.csv"
   ],
   "dictionaryDefinitions": [],
   "dictionaries": [],
   "words": [
     "CURLOPT",
     "DEPTS",
+    "Eeuo",
     "FILEN",
     "GETPID",
     "GOBACK",
+    "ISAM",
     "Makefiles",
     "NUMVAL",
+    "readback",
     "setopt",
+    "TOOBIG",
+    "transactionally",
     "transpiles",
     "unparse"
   ],
