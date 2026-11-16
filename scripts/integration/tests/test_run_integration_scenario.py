@@ -39,25 +39,46 @@ def complete_run_and_chained_month(base):
         f"STEP{i:02d}" for i in range(1, len(executed) + 1)
     ]
     work = base / "work/202611"
+    with (base / "input/emp.csv").open(newline="") as stream:
+        employees = list(csv.DictReader(stream))
+    employee_ids = {row["employee_id"] for row in employees}
+    department_ids = {row["department_id"] for row in employees}
+    assert len(employees) == len(employee_ids) == 30
+    with (base / "input/dept.csv").open(newline="") as stream:
+        assert department_ids <= {row["department_id"] for row in csv.DictReader(stream)}
     with (base / "input/salary.csv").open(newline="") as stream:
-        salaries = {r["employee_id"]: int(r["monthly_salary"])
-                    for r in csv.DictReader(stream)}
+        salary_rows = list(csv.DictReader(stream))
+    salaries = {r["employee_id"]: int(r["monthly_salary"]) for r in salary_rows}
+    assert len(salary_rows) == len(salaries) == len(employees)
+    assert salaries.keys() == employee_ids
     attendance = (work / "attendance.dat").read_text().splitlines()
+    assert len(attendance) == len(employees)
     expected = {
         row[:4]: salaries[row[:4]] + int(row[4:7]) * 25 - int(row[7:9]) * 80
         for row in attendance
     }
+    assert expected.keys() == employee_ids
     with (base / "output/salary.csv").open(newline="") as stream:
         output = list(csv.DictReader(stream))
+    assert len(output) == len(employees)
     assert {row["salary_month"] for row in output} == {"202611"}
     assert {r["employee_id"]: int(r["monthly_salary"]) for r in output} == expected
     november_csv = (base / "output/salary.csv").read_bytes()
-    assert len((work / "employee_comparison.dat").read_text().splitlines()) == 4
-    assert len((work / "department_employee_detail.dat").read_text().splitlines()) == 4
+    assert len((work / "employee_comparison.dat").read_text().splitlines()) == len(employees)
+    assert len((work / "department_employee_detail.dat").read_text().splitlines()) == len(employees)
     assert sum(len(f.read_text().splitlines())
-               for f in (work / "departments").glob("employee.*")) == 4
+               for f in (work / "departments").glob("employee.*")) == len(employees)
+    for report, before in (("employees_before_cutoff.csv", True),
+                           ("employees_on_or_after_cutoff.csv", False)):
+        with (base / "output" / report).open(newline="") as stream:
+            ids = [row[0] for row in csv.reader(stream)]
+        expected_ids = {
+            row["employee_id"] for row in employees
+            if (row["join_date"] < "20200101") == before
+        }
+        assert len(ids) == len(expected_ids) and set(ids) == expected_ids
     changes = (work / "department_change.dat").read_text().splitlines()
-    assert [row[4] for row in changes] == ["N"] * 4
+    assert [row[4] for row in changes] == ["N"] * len(department_ids)
 
     shutil.copyfile(base / "output/salary.csv", base / "input/salary.csv")
     result = subprocess.run(
@@ -70,7 +91,7 @@ def complete_run_and_chained_month(base):
     assert {row[4:10] for row in prior} == {"202611"}
     assert {row[:4]: int(row[10:16]) for row in prior} == expected
     changes = (december / "department_change.dat").read_text().splitlines()
-    assert len(changes) == 4 and all(row[4] in "CU" for row in changes)
+    assert len(changes) == len(department_ids) and all(row[4] in "CU" for row in changes)
 
     shutil.copyfile(base / "output/salary.csv", base / "input/salary.csv")
     result = subprocess.run(
@@ -79,7 +100,7 @@ def complete_run_and_chained_month(base):
     )
     assert result.returncode == 0, result.stdout + result.stderr
     prior = (base / "work/202701/previous_salary.dat").read_text().splitlines()
-    assert len(prior) == 4 and {row[4:10] for row in prior} == {"202612"}
+    assert len(prior) == len(employees) and {row[4:10] for row in prior} == {"202612"}
     run_job(base, "--restart", "STEP29")
     assert (base / "output/salary.csv").read_bytes() == november_csv
 

@@ -321,6 +321,9 @@ controller stops.
 | `input/dept.csv` | CSV | `department_id,department_name` |
 | `input/salary.csv` | CSV | Previous-month salaries: `salary_month,employee_id,monthly_salary`. |
 
+The fixtures contain 30 employees across four departments, with one salary
+record per employee.
+
 Employee CSV rows contain exactly four fields: a four-digit employee ID, a
 nonempty name of at most 10 bytes, a four-digit department ID, and an
 eight-digit join date (`YYYYMMDD`). The reader writes the 42-byte `EMP-REC`;
