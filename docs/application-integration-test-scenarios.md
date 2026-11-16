@@ -8,13 +8,13 @@ JCL-style example, not a proposal to add a mainframe JCL runtime.
 
 The scenario uses employees, departments, and salaries so that each processing
 step has a concrete business purpose. Existing COBOL programs are reused where
-possible. The shell job controller remains additional work.
+possible.
 
 ## End-to-End Flow
 
 ```mermaid
 flowchart TD
-    job["run_integration_scenario.sh<br/>Create a clean work directory"]
+    job["run_integration_scenario.sh<br/>Prepare the work directory"]
     attendance_gen["generate_attendance<br/>Run month and seed"]
     run_month[/Run month: YYYY-MM/]
 
@@ -150,7 +150,7 @@ scripts live under `scripts/integration/`.
 
 | Component | Folder | Status | Role |
 | --- | --- | --- | --- |
-| `run_integration_scenario.sh` | `scripts/integration/` | Additional | Shell job controller (JCL-style). |
+| `run_integration_scenario.sh` | `scripts/integration/` | Implemented | Shell job controller (JCL-style). |
 | `transform_from_emp_csv` | `src/transforming/` | Implemented | Convert `input/emp.csv` to fixed-length `emp.dat`. |
 | `transform_from_dept_csv` | `src/transforming/` | Implemented | Convert `input/dept.csv` to fixed-length `dept.dat`. |
 | `transform_from_salary_csv` | `src/transforming/` | Implemented | Convert `input/salary.csv` to `previous_salary.dat`, ignoring its dates and stamping the previous month. |
@@ -176,6 +176,61 @@ The SQLite database lives outside the per-run work directory so a later run can
 read the previous month's summaries. SQLite and the ISAM file are not shared:
 ISAM serves the salary calculation, and SQLite serves the department summary
 history.
+
+## Running and Restarting the Job
+
+Build the programs with `make`, then run:
+
+```bash
+scripts/integration/run_integration_scenario.sh --run-month 2026-11
+```
+
+The run month is required. `--seed` defaults to `1`, and `--cutoff` defaults
+to `20200101`; the cutoff is an eight-digit join date. `--list-steps` displays
+the numbered STEP names. Each step reports its start and normal end, and a
+nonzero status stops the job and displays the failing STEP and restart command.
+
+The default base directory is the repository root. Inputs are read from
+`input/`, work files are stored in `work/YYYYMM/`, CSV reports
+are written to `output/`, and the persistent SQLite database is
+`state/summary.db`. `--base-dir DIR` selects another existing base directory
+with the same layout; its path must not contain whitespace. Only one job may
+run at a time per base directory. The script requires Bash, GNU `date`, `cut`,
+`cmp`, and `flock`, in addition to the built COBOL programs.
+
+To restart, retain the work files, correct the cause of the failure, and select
+the STEP to run. Use the same run month, seed, cutoff, and base directory unless
+the changes are intentional and consistent with the retained work files:
+
+```bash
+scripts/integration/run_integration_scenario.sh --run-month 2026-11 \
+  --restart STEP07
+```
+
+The selected STEP runs again, followed by every subsequent STEP. The operator
+must choose the restart STEP and ensure that its required inputs and work files
+are available and consistent; the job does not check earlier STEP completion or
+saved run options. Omitting `--restart` begins a new run at STEP01 without
+deleting the persistent SQLite history.
+
+STEP07 rebuilds the current ISAM file from the saved employee and previous
+salary inputs before updating it. This prevents a failed partial update from
+being applied twice. STEP21 removes the job's existing numbered department
+split files before producing them again, because that program appends to its
+outputs. STEP27 replaces the current month's SQLite rows transactionally, and
+STEP28 reads them back for comparison. STEP29 publishes that month's saved
+reports to `output/`, including when restarting after another month has run.
+
+On failure, files produced by the failed or later STEPs, including reports in
+`output/`, may be partial or left over from an earlier run. Use the STEP
+normal-end messages, rather than file existence, to determine completion. A
+full run overwrites its generated files as each STEP executes.
+
+Run the end-to-end and restart tests after building the programs:
+
+```bash
+python3 scripts/integration/tests/test_run_integration_scenario.py
+```
 
 ## Additional Program Interfaces
 
@@ -342,7 +397,7 @@ unformatted numbers. Copy it over the input and run the job again with the
 next run month: the salaries from the first run become the previous month, so
 results may change from run to run. The run month and seed affect attendance
 generation, though different arguments may still produce the same values.
-Rebuild the ISAM file in each run's fresh work directory, and key
+Rebuild the ISAM file in each run's work directory, and key
 SQLite rows by month (replace the row for the same run month) so reruns do
 not duplicate rows. The first run has no previous-month summaries and reports
 every department as new.
