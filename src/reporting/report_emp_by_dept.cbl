@@ -26,7 +26,7 @@
 
        01  WS-COUNTERS.
            05  WS-IN1-COUNT        PIC 9(009) VALUE 0.
-           05  WS-REPORT-PAGES     PIC 9(009) VALUE 0.
+           05  WS-REPORT-COUNT     PIC 9(009) VALUE 0.
            05  WS-INVALID-RECORD-COUNT
                                    PIC 9(009) VALUE 0.
 
@@ -174,7 +174,7 @@
            INITIATE EMPLOYEE-REPORT.
 
        TERMINATE-PROCESS.
-           MOVE PAGE-COUNTER TO WS-REPORT-PAGES
+           MOVE PAGE-COUNTER TO WS-REPORT-COUNT
            TERMINATE EMPLOYEE-REPORT
            PERFORM VALIDATE-REPORT-FILE-STATUS
            PERFORM CLOSE-IN1-FILE
@@ -182,7 +182,7 @@
            DISPLAY "SUCCESS: Department employee report completed."
            DISPLAY "------------------------------"
            DISPLAY "INPUT1 READ COUNT: " WS-IN1-COUNT
-           DISPLAY "REPORT PAGE:       " WS-REPORT-PAGES
+           DISPLAY "REPORT PAGE:       " WS-REPORT-COUNT
            DISPLAY "INVALID RECORD COUNT: " WS-INVALID-RECORD-COUNT
            DISPLAY "------------------------------".
 
