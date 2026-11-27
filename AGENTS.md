@@ -34,6 +34,8 @@
 ## Boundaries
 
 - Do not create pull requests or perform operations on the remote repository unless instructed to do so.
+remove them after work is complete.
+- Do not leave temporary or generated files in the repository unless they are intended as project artifacts.
 
 ## References
 

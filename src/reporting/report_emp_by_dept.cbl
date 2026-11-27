@@ -25,45 +25,51 @@
            05  WS-REPORT-FILE-PATH PIC X(1024) VALUE SPACES.
 
        01  WS-COUNTERS.
-           05  WS-IN1-COUNT        PIC 9(009) VALUE 0.
-           05  WS-REPORT-COUNT     PIC 9(009) VALUE 0.
-           05  WS-INVALID-RECORD-COUNT
+           03  WS-IN1-COUNT        PIC 9(009) VALUE 0.
+           03  WS-REPORT-PAGE-COUNT
                                    PIC 9(009) VALUE 0.
-
-       01  WS-FILE-STATUSES.
-       COPY file_statuses
-           REPLACING ==:PREFIX:== BY ==WS-IN1==.
-       COPY file_statuses
-           REPLACING ==:PREFIX:== BY ==WS-REPORT==.
+           03  WS-IN1-INVALID-RECORD-COUNT
+                                   PIC 9(009) VALUE 0.
 
        01  WS-IO-ERROR-DATA.
        COPY file_io_error.
+
+       01  WS-IN1-STATUS.
+       COPY file_statuses
+           REPLACING ==:PREFIX:== BY ==WS-IN1==.
 
        01  WS-IN1-REC.
        COPY emp_rec REPLACING ==:PREFIX:== BY ==WS-IN1==.
            05  FILLER              PIC X(008).
 
-       01  WS-GRAND-TOTALS.
-           05  WS-TOTAL-COUNT      PIC 9(009) VALUE 0.
-           05  WS-TOTAL-SALARY     PIC 9(015) VALUE 0.
-       01  WS-DEPT-TOTALS.
-           05  WS-DEPT-COUNT       PIC 9(009) VALUE 0.
-           05  WS-DEPT-SALARY      PIC 9(015) VALUE 0.
+       01  WS-REPORT-STATUS.
+       COPY file_statuses
+           REPLACING ==:PREFIX:== BY ==WS-REPORT==.
 
-       01  WS-DEPT-CONTROL.
-           05  WS-LAST-DEPT-ID-RAW PIC X(004) VALUE SPACES.
-           05  WS-LAST-DEPT-NAME   PIC X(010) VALUE SPACES.
-           05  WS-DEPT-STARTED     PIC X VALUE "N".
+       01  WS-REPORT-DATA.
+           05  WS-REPORT-DETAIL.
+               10  WS-R-DETAIL-DEPT-ID-RAW PIC X(004).
+               10  WS-R-DETAIL-DEPT-NAME   PIC X(010).
+               10  WS-R-DETAIL-EMP-ID-RAW  PIC X(004).
+               10  WS-R-DETAIL-EMP-NAME    PIC X(010).
+               10  WS-R-DETAIL-JOIN-DATE   PIC X(010).
+               10  WS-R-DETAIL-SALARY      PIC X(009).
+           05  WS-REPORT-DEPT-CONTROL.
+               10  WS-R-LAST-DEPT-ID-RAW   PIC X(004) VALUE SPACES.
+               10  WS-R-LAST-DEPT-NAME     PIC X(010) VALUE SPACES.
+               10  WS-R-LAST-DEPT-STARTED  PIC X VALUE "N".
+           05  WS-REPORT-DEPT-TOTALS.
+               10  WS-R-DEPT-COUNT         PIC 9(009) VALUE 0.
+               10  WS-R-DEPT-SALARY        PIC 9(015) VALUE 0.
+           05  WS-REPORT-GRAND-TOTALS.
+               10  WS-R-TOTAL-COUNT        PIC 9(009) VALUE 0.
+               10  WS-R-TOTAL-SALARY       PIC 9(015) VALUE 0.
 
-       01  WS-FORMATTED-DETAIL.
-           05 WS-FORMATTED-JOIN-DATE   PIC X(010).
-           05 WS-FORMATTED-SALARY      PIC X(009).
-
-       01  WS-FORMAT.
-           05  WS-DATE-CHECK           PIC 9(008) VALUE 0.
-           05  WS-DATE-EDIT            PIC 9999/99/99.
-           05  WS-SALARY-EDIT          PIC ZZZ,ZZ9.
-           05  WS-CURRENT-RECORD-INVALID   PIC X VALUE "N".
+       01  WS-FORMAT-WORK.
+           05  WS-FORMAT-DATE-EDIT         PIC 9999/99/99.
+           05  WS-FORMAT-SALARY-EDIT       PIC ZZZ,ZZ9.
+           05  WS-FORMAT-CURRENT-RECORD-INVALID
+                                           PIC X VALUE "N".
 
        REPORT SECTION.
        RD  EMPLOYEE-REPORT
@@ -71,8 +77,8 @@
            PAGE LIMIT IS 60 LINES
                HEADING 1
                FIRST DETAIL 6
-               LAST CONTROL HEADING 54
-               LAST DETAIL 56
+               LAST CONTROL HEADING 53
+               LAST DETAIL 54
                FOOTING 59.
 
        01  EMPLOYEE-PAGE-HEADING TYPE PAGE HEADING.
@@ -93,42 +99,44 @@
            05  LINE 5.
                10  COLUMN 1    PIC X(061) VALUE ALL "-".
 
-       01  EMPLOYEE-DEPT-FOOTING TYPE CONTROL FOOTING
-           WS-IN1-EMP-DEPT-ID-RAW
-           NEXT GROUP IS PLUS 1.
-           05  LINE PLUS 1.
-               10  COLUMN 1    PIC X(004)
-                   SOURCE WS-LAST-DEPT-ID-RAW.
-               10  COLUMN 7    PIC X(010)
-                   SOURCE WS-LAST-DEPT-NAME.
-               10  COLUMN 25   PIC X(008) VALUE "RECORDS:".
-               10  COLUMN 49   PIC ZZZ,ZZZ,ZZ9
-                   SOURCE WS-DEPT-COUNT.
-           05  LINE PLUS 1.
-               10  COLUMN 25   PIC X(007) VALUE "SALARY:".
-               10  COLUMN 41   PIC ZZZ,ZZZ,ZZZ,ZZZ,ZZ9
-                   SOURCE WS-DEPT-SALARY.
-
        01  EMPLOYEE-DETAIL TYPE DETAIL.
            05  LINE PLUS 1.
                10  COLUMN 1    PIC X(004)
-                   SOURCE WS-IN1-EMP-DEPT-ID-RAW
+                   SOURCE WS-R-DETAIL-DEPT-ID-RAW
                    GROUP INDICATE.
                10  COLUMN 7    PIC X(010)
-                   SOURCE WS-IN1-EMP-DEPT-NAME
+                   SOURCE WS-R-DETAIL-DEPT-NAME
                    GROUP INDICATE.
                10  COLUMN 19   PIC X(004)
-                   SOURCE WS-IN1-EMP-ID-RAW.
+                   SOURCE WS-R-DETAIL-EMP-ID-RAW.
                10  COLUMN 25   PIC X(010)
-                   SOURCE WS-IN1-EMP-NAME.
+                   SOURCE WS-R-DETAIL-EMP-NAME.
                10  COLUMN 41   PIC X(010)
-                   SOURCE WS-FORMATTED-JOIN-DATE.
+                   SOURCE WS-R-DETAIL-JOIN-DATE.
                10  COLUMN 53   PIC X(009)
-                   SOURCE WS-FORMATTED-SALARY.
+                   SOURCE WS-R-DETAIL-SALARY.
+
        01  NO-EMPLOYEE-DETAIL TYPE DETAIL.
            05  LINE PLUS 1.
                10  COLUMN 1    PIC X(020)
                    VALUE "NO EMPLOYEE RECORDS".
+
+       01  EMPLOYEE-DEPT-FOOTING TYPE CONTROL FOOTING
+           WS-IN1-EMP-DEPT-ID-RAW.
+           05  LINE PLUS 1.
+               10  COLUMN 1    PIC X(004)
+                   SOURCE WS-R-LAST-DEPT-ID-RAW.
+               10  COLUMN 7    PIC X(010)
+                   SOURCE WS-R-LAST-DEPT-NAME.
+               10  COLUMN 25   PIC X(008) VALUE "RECORDS:".
+               10  COLUMN 49   PIC ZZZ,ZZZ,ZZ9
+                   SOURCE WS-R-DEPT-COUNT.
+           05  LINE PLUS 1.
+               10  COLUMN 25   PIC X(007) VALUE "SALARY:".
+               10  COLUMN 41   PIC ZZZ,ZZZ,ZZZ,ZZZ,ZZ9
+                   SOURCE WS-R-DEPT-SALARY.
+           05  LINE PLUS 1.
+               10  COLUMN 62   PIC X VALUE SPACE.
 
        01  EMPLOYEE-REPORT-FOOTING TYPE REPORT FOOTING.
            05  LINE PLUS 2.
@@ -136,12 +144,12 @@
                10  COLUMN 25   PIC X(019)
                    VALUE "RECORDS:".
                10  COLUMN 49   PIC ZZZ,ZZZ,ZZ9
-                   SOURCE WS-TOTAL-COUNT.
+                   SOURCE WS-R-TOTAL-COUNT.
            05  LINE PLUS 1.
                10  COLUMN 25   PIC X(013)
                    VALUE "SALARY:".
                10  COLUMN 41   PIC ZZZ,ZZZ,ZZZ,ZZZ,ZZ9
-                   SOURCE WS-TOTAL-SALARY.
+                   SOURCE WS-R-TOTAL-SALARY.
 
        PROCEDURE DIVISION.
            PERFORM INITIALIZE-PROCESS
@@ -174,7 +182,7 @@
            INITIATE EMPLOYEE-REPORT.
 
        TERMINATE-PROCESS.
-           MOVE PAGE-COUNTER TO WS-REPORT-COUNT
+           MOVE PAGE-COUNTER TO WS-REPORT-PAGE-COUNT
            TERMINATE EMPLOYEE-REPORT
            PERFORM VALIDATE-REPORT-FILE-STATUS
            PERFORM CLOSE-IN1-FILE
@@ -182,8 +190,9 @@
            DISPLAY "SUCCESS: Department employee report completed."
            DISPLAY "------------------------------"
            DISPLAY "INPUT1 READ COUNT: " WS-IN1-COUNT
-           DISPLAY "REPORT PAGE:       " WS-REPORT-COUNT
-           DISPLAY "INVALID RECORD COUNT: " WS-INVALID-RECORD-COUNT
+           DISPLAY "INPUT1 INVALID:    "
+                   WS-IN1-INVALID-RECORD-COUNT
+           DISPLAY "REPORT PAGE:       " WS-REPORT-PAGE-COUNT
            DISPLAY "------------------------------".
 
        MAIN-PROCESS.
@@ -192,60 +201,77 @@
                GENERATE NO-EMPLOYEE-DETAIL
                PERFORM VALIDATE-REPORT-FILE-STATUS
            ELSE
-               INITIALIZE WS-GRAND-TOTALS
+               INITIALIZE WS-REPORT-GRAND-TOTALS
                PERFORM UNTIL WS-IN1-FILE-EOF
-                   ADD 1 TO WS-TOTAL-COUNT
-                   IF WS-IN1-EMP-SALARY-RAW IS NUMERIC
-                       ADD WS-IN1-EMP-SALARY TO WS-TOTAL-SALARY
-                   END-IF
+                   PERFORM ACCUMULATE-GRAND-TOTALS
 
                    PERFORM FORMAT-EMPLOYEE-DETAIL
                    GENERATE EMPLOYEE-DETAIL
                    PERFORM VALIDATE-REPORT-FILE-STATUS
 
-                   IF WS-DEPT-STARTED = "Y" AND
-                      WS-LAST-DEPT-ID-RAW NOT = WS-IN1-EMP-DEPT-ID-RAW
-                       INITIALIZE WS-DEPT-TOTALS
-                   END-IF
-
-                   ADD 1 TO WS-DEPT-COUNT
-                   IF WS-IN1-EMP-SALARY-RAW IS NUMERIC
-                       ADD WS-IN1-EMP-SALARY TO WS-DEPT-SALARY
-                   END-IF
-                   MOVE WS-IN1-EMP-DEPT-ID-RAW TO WS-LAST-DEPT-ID-RAW
-                   MOVE WS-IN1-EMP-DEPT-NAME TO WS-LAST-DEPT-NAME
-                   MOVE "Y" TO WS-DEPT-STARTED
-
+                   PERFORM ACCUMULATE-DEPARTMENT-TOTALS
                    PERFORM READ-IN1-FILE
                END-PERFORM
            END-IF.
 
+       ACCUMULATE-GRAND-TOTALS.
+           ADD 1 TO WS-R-TOTAL-COUNT
+           IF WS-IN1-EMP-SALARY-RAW IS NUMERIC
+               ADD WS-IN1-EMP-SALARY TO WS-R-TOTAL-SALARY
+           END-IF.
+
+       ACCUMULATE-DEPARTMENT-TOTALS.
+           IF WS-R-LAST-DEPT-STARTED = "Y" AND
+              WS-R-LAST-DEPT-ID-RAW NOT = WS-IN1-EMP-DEPT-ID-RAW
+               INITIALIZE WS-REPORT-DEPT-TOTALS
+           END-IF
+
+           ADD 1 TO WS-R-DEPT-COUNT
+           IF WS-IN1-EMP-SALARY-RAW IS NUMERIC
+               ADD WS-IN1-EMP-SALARY TO WS-R-DEPT-SALARY
+           END-IF
+
+           MOVE WS-IN1-EMP-DEPT-ID-RAW
+               TO WS-R-LAST-DEPT-ID-RAW
+           MOVE WS-IN1-EMP-DEPT-NAME
+               TO WS-R-LAST-DEPT-NAME
+           MOVE "Y" TO WS-R-LAST-DEPT-STARTED.
+
        FORMAT-EMPLOYEE-DETAIL.
-           MOVE "N" TO WS-CURRENT-RECORD-INVALID
+           INITIALIZE WS-REPORT-DETAIL
+           MOVE "N" TO WS-FORMAT-CURRENT-RECORD-INVALID
+
+           MOVE WS-IN1-EMP-DEPT-ID-RAW TO WS-R-DETAIL-DEPT-ID-RAW
+           MOVE WS-IN1-EMP-DEPT-NAME TO WS-R-DETAIL-DEPT-NAME
+           MOVE WS-IN1-EMP-ID-RAW TO WS-R-DETAIL-EMP-ID-RAW
+           MOVE WS-IN1-EMP-NAME TO WS-R-DETAIL-EMP-NAME
 
            IF WS-IN1-EMP-JOIN-DATE-RAW IS NUMERIC
                IF FUNCTION TEST-DATE-YYYYMMDD(WS-IN1-EMP-JOIN-DATE) = 0
-                   MOVE WS-IN1-EMP-JOIN-DATE TO WS-DATE-EDIT
-                   MOVE WS-DATE-EDIT TO WS-FORMATTED-JOIN-DATE
+                   MOVE WS-IN1-EMP-JOIN-DATE
+                       TO WS-FORMAT-DATE-EDIT
+                   MOVE WS-FORMAT-DATE-EDIT
+                       TO WS-R-DETAIL-JOIN-DATE
                ELSE
-                   MOVE "NAN" TO WS-FORMATTED-JOIN-DATE
-                   MOVE "Y" TO WS-CURRENT-RECORD-INVALID
+                   MOVE "NAN" TO WS-R-DETAIL-JOIN-DATE
+                   MOVE "Y" TO WS-FORMAT-CURRENT-RECORD-INVALID
                END-IF
            ELSE
-               MOVE "NAN" TO WS-FORMATTED-JOIN-DATE
-               MOVE "Y" TO WS-CURRENT-RECORD-INVALID
+               MOVE "NAN" TO WS-R-DETAIL-JOIN-DATE
+               MOVE "Y" TO WS-FORMAT-CURRENT-RECORD-INVALID
            END-IF
 
            IF WS-IN1-EMP-SALARY-RAW IS NUMERIC
-               MOVE WS-IN1-EMP-SALARY TO WS-SALARY-EDIT
-               MOVE WS-SALARY-EDIT TO WS-FORMATTED-SALARY
+               MOVE WS-IN1-EMP-SALARY TO WS-FORMAT-SALARY-EDIT
+               MOVE WS-FORMAT-SALARY-EDIT
+                   TO WS-R-DETAIL-SALARY
            ELSE
-               MOVE "NAN" TO WS-FORMATTED-SALARY
-               MOVE "Y" TO WS-CURRENT-RECORD-INVALID
+               MOVE "NAN" TO WS-R-DETAIL-SALARY
+               MOVE "Y" TO WS-FORMAT-CURRENT-RECORD-INVALID
            END-IF
 
-           IF WS-CURRENT-RECORD-INVALID = "Y"
-               ADD 1 TO WS-INVALID-RECORD-COUNT
+           IF WS-FORMAT-CURRENT-RECORD-INVALID = "Y"
+               ADD 1 TO WS-IN1-INVALID-RECORD-COUNT
            END-IF.
 
        VALIDATE-REPORT-FILE-STATUS.
@@ -276,9 +302,9 @@
            EVALUATE TRUE
                WHEN WS-IN1-FILE-OK
                    ADD 1 TO WS-IN1-COUNT
-                   MOVE IN1-REC TO WS-IN1-REC
+                   MOVE IN1-REC TO WS-IN1-EMP-REC
                WHEN WS-IN1-FILE-EOF
-                   MOVE HIGH-VALUES TO WS-IN1-REC
+                   MOVE HIGH-VALUES TO WS-IN1-EMP-REC
                WHEN OTHER
                    MOVE "IN1-FILE" TO WS-IO-ERROR-FILE
                    MOVE WS-IN1-FILE-STATUS TO WS-IO-ERROR-CODE

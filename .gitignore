@@ -72,6 +72,11 @@ Testing/
 bin/
 obj/
 
+# GnuCOBOL intermediate/generated files
+*.c.h
+*.c.l.h
+*.i
+
 ## workspace
 [Tt]emp/
 /work/
