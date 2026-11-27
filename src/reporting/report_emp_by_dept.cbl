@@ -123,7 +123,8 @@
 
        01  EMPLOYEE-DEPT-FOOTING TYPE CONTROL FOOTING
            WS-IN1-EMP-DEPT-ID-RAW.
-           05  LINE PLUS 1.
+           05  LINE PLUS 1
+               PRESENT WHEN WS-IN1-COUNT > 0.
                10  COLUMN 1    PIC X(004)
                    SOURCE WS-R-LAST-DEPT-ID-RAW.
                10  COLUMN 7    PIC X(010)
@@ -131,7 +132,8 @@
                10  COLUMN 25   PIC X(008) VALUE "RECORDS:".
                10  COLUMN 49   PIC ZZZ,ZZZ,ZZ9
                    SOURCE WS-R-DEPT-COUNT.
-           05  LINE PLUS 1.
+           05  LINE PLUS 1
+               PRESENT WHEN WS-IN1-COUNT > 0.
                10  COLUMN 25   PIC X(007) VALUE "SALARY:".
                10  COLUMN 41   PIC ZZZ,ZZZ,ZZZ,ZZZ,ZZ9
                    SOURCE WS-R-DEPT-SALARY.
@@ -190,8 +192,7 @@
            DISPLAY "SUCCESS: Department employee report completed."
            DISPLAY "------------------------------"
            DISPLAY "INPUT1 READ COUNT: " WS-IN1-COUNT
-           DISPLAY "INPUT1 INVALID:    "
-                   WS-IN1-INVALID-RECORD-COUNT
+           DISPLAY "INPUT1 INVALID:    " WS-IN1-INVALID-RECORD-COUNT
            DISPLAY "REPORT PAGE:       " WS-REPORT-PAGE-COUNT
            DISPLAY "------------------------------".
 
@@ -241,10 +242,19 @@
            INITIALIZE WS-REPORT-DETAIL
            MOVE "N" TO WS-FORMAT-CURRENT-RECORD-INVALID
 
-           MOVE WS-IN1-EMP-DEPT-ID-RAW TO WS-R-DETAIL-DEPT-ID-RAW
-           MOVE WS-IN1-EMP-DEPT-NAME TO WS-R-DETAIL-DEPT-NAME
            MOVE WS-IN1-EMP-ID-RAW TO WS-R-DETAIL-EMP-ID-RAW
+           IF WS-IN1-EMP-ID-RAW IS NOT NUMERIC
+               MOVE "Y" TO WS-FORMAT-CURRENT-RECORD-INVALID
+           END-IF
+
            MOVE WS-IN1-EMP-NAME TO WS-R-DETAIL-EMP-NAME
+
+           MOVE WS-IN1-EMP-DEPT-ID-RAW TO WS-R-DETAIL-DEPT-ID-RAW
+           IF WS-IN1-EMP-DEPT-ID-RAW IS NOT NUMERIC
+               MOVE "Y" TO WS-FORMAT-CURRENT-RECORD-INVALID
+           END-IF
+
+           MOVE WS-IN1-EMP-DEPT-NAME TO WS-R-DETAIL-DEPT-NAME
 
            IF WS-IN1-EMP-JOIN-DATE-RAW IS NUMERIC
                IF FUNCTION TEST-DATE-YYYYMMDD(WS-IN1-EMP-JOIN-DATE) = 0
